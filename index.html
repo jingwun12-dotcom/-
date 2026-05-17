@@ -82,7 +82,7 @@
             <div class="bg-white/90 p-4 rounded-2xl border border-emerald-50 shadow-sm space-y-3">
                 <div class="flex items-center space-x-2 border-b border-slate-100 pb-2">
                     <div class="w-2 h-4 bg-emerald-400 rounded-full"></div>
-                    <h3 class="font-bold text-sm text-slate-700">交通與下榻旅宿</h3>
+                    <h3 class="font-bold text-sm text-slate-700">交通與旅宿</h3>
                 </div>
                 <div class="text-xs space-y-2 text-slate-500">
                     <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100/50">
@@ -194,6 +194,22 @@
                 <button onclick="addExpense()" class="w-full bg-gradient-to-r from-emerald-400 to-blue-400 text-white text-xs py-2 rounded-xl font-bold shadow-sm transition">儲存消費 🌐</button>
             </div>
 
+            <div class="bg-gradient-to-br from-slate-700 to-slate-800 text-white p-4 rounded-2xl shadow-sm space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-600 pb-1.5">
+                    <h3 class="font-bold text-xs tracking-wider flex items-center"><i class="fa-solid fa-users-viewfinder mr-1.5 text-emerald-400"></i>群組分帳與平攤明細</h3>
+                    <span class="text-[9px] bg-slate-600 px-2 py-0.5 rounded-md text-slate-300">雲端即時動態</span>
+                </div>
+                <div class="text-xs space-y-1 text-slate-200">
+                    <div class="flex justify-between"><span>全團總花費 (日幣):</span><span id="split-total-jpy" class="font-bold text-emerald-300">¥ 0</span></div>
+                    <div class="flex justify-between"><span>全團總花費 (台幣估算):</span><span id="split-total-twd" class="font-bold">NT$ 0</span></div>
+                    <div class="flex justify-between border-b border-slate-600/50 pb-1"><span>每人平均應付 (日幣):</span><span id="split-avg-jpy" class="text-amber-300 font-bold">¥ 0</span></div>
+                </div>
+                <div id="split-users-detail" class="space-y-1.5 text-[11px] pt-1">
+                    </div>
+                <div id="split-settlement-plan" class="border-t border-slate-600/40 pt-2 text-[11px] text-emerald-200 space-y-1">
+                    </div>
+            </div>
+
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
                     <h3 class="font-bold text-sm text-slate-700">記帳歷史明細</h3>
@@ -210,6 +226,12 @@
                 <button onclick="switchListTab('check')" id="list-tab-check" class="w-1/3 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400">託運行李</button>
             </div>
 
+            <div class="flex justify-end">
+                <button onclick="exportChecklistToText()" class="text-[11px] bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded-xl font-bold hover:bg-blue-100 transition flex items-center gap-1">
+                    <i class="fa-solid fa-file-export"></i> 導出/複製目前完整清單文字
+                </button>
+            </div>
+
             <div id="list-container-pre" class="list-sub-panel bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2"></div>
             <div id="list-container-carry" class="list-sub-panel hidden bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2"></div>
             <div id="list-container-check" class="list-sub-panel hidden bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2"></div>
@@ -223,15 +245,36 @@
             </div>
         </section>
 
-        <section id="nav-info" class="tab-content hidden space-y-4">
+        <section id="sec-info" class="tab-content hidden space-y-4">
             <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm space-y-3">
                 <h3 class="font-bold text-sm text-slate-700 flex items-center"><i class="fa-solid fa-map text-blue-400 mr-2"></i>🗺️ 京阪神奈交通路線圖</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">點擊下方連結官方網站路線圖：</p>
+                
                 <div class="grid grid-cols-1 gap-2 pt-1">
                     <a href="https://global.trafficinfo.westjr.co.jp/tc/kansai" target="_blank" class="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100 hover:bg-blue-50 transition text-xs">
-                        <span class="font-bold text-blue-700"><i class="fa-solid fa-train mr-2"></i>JR 西日本 (近畿全區路網)</span>
+                        <span class="font-bold text-blue-700"><i class="fa-solid fa-train mr-2"></i>JR 西日本 (近畿全區網)</span>
                         <i class="fa-solid fa-chevron-right text-blue-400 text-[10px]"></i>
                     </a>
+                    <a href="https://subway.osakametro.co.jp/guide/routemap.php" target="_blank" class="flex items-center justify-between p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-xs">
+                        <span class="font-bold text-emerald-700"><i class="fa-solid fa-train-subway mr-2"></i>大阪地鐵 (Osaka Metro)</span>
+                        <i class="fa-solid fa-chevron-right text-emerald-400 text-[10px]"></i>
+                    </a>
+                    <a href="https://kyoto.travel/tw/getting-around/" target="_blank" class="flex items-center justify-between p-3 bg-teal-50/50 rounded-xl border border-teal-100 hover:bg-teal-50 transition text-xs">
+                        <span class="font-bold text-teal-700"><i class="fa-solid fa-bus mr-2"></i>京都交通資訊導覽</span>
+                        <i class="fa-solid fa-chevron-right text-teal-400 text-[10px]"></i>
+                    </a>
+                    <a href="https://www.kintetsu.co.jp/station/" target="_blank" class="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl border border-amber-100 hover:bg-amber-50 transition text-xs">
+                        <span class="font-bold text-amber-700"><i class="fa-solid fa-route mr-2"></i>近鐵電車路線圖 (往奈良)</span>
+                        <i class="fa-solid fa-chevron-right text-amber-400 text-[10px]"></i>
+                    </a>
                 </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                <h3 class="font-bold text-sm text-slate-700"><i class="fa-solid fa-cloud-sun text-emerald-400 mr-2"></i>即時氣象預報</h3>
+                <a href="https://www.jma.go.jp/jma/index.html" target="_blank" class="block w-full text-center bg-gradient-to-r from-emerald-400 to-blue-400 text-white font-bold py-2 rounded-xl text-xs shadow-xs hover:opacity-95 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i>開啟日本氣象廳 (JMA) 官網
+                </a>
             </div>
         </section>
     </main>
@@ -252,6 +295,10 @@
         <button onclick="switchTab('lists')" id="nav-lists" class="nav-btn flex flex-col items-center space-y-1 text-slate-400">
             <i class="fa-solid fa-square-check text-lg"></i>
             <span class="text-[10px] font-bold tracking-wider">LISTS</span>
+        </button>
+        <button onclick="switchTab('info')" id="nav-info" class="nav-btn flex flex-col items-center space-y-1 text-slate-400">
+            <i class="fa-solid fa-circle-info text-lg"></i>
+            <span class="text-[10px] font-bold tracking-wider">INFO</span>
         </button>
     </nav>
 
@@ -275,8 +322,9 @@
         let currentDay = 1;
         let currentListTab = 'pre';
         let base64Avatar = "";
+        let allUsersCached = [];
 
-        // 預設寫入的 6 天固定行程
+        // 固定核心行程表
         const fixedItinerary = {
             1: [
                 { time: "06:30", title: "第一航廈集合", desc: "準備搭乘星宇航空，確認手提行李無違禁品。" },
@@ -334,30 +382,30 @@
             ]
         };
 
-        // 預設寫入的 18 個景點深度誌攻略
+        // 預設 18 個景點深度誌（包含 Google Maps 連結）
         const fixedGuides = [
-            { tag: "大阪 // 歷史", title: "大阪城", desc: "日本三名城之一，天守閣內展示大量豐臣秀吉時期的歷史文物。護城河及巨石城牆非常壯觀。\n● 玩法：搭乘電梯或步行上天守閣展望台鳥瞰大阪市區景致。\n● 建議花費：純逛公園免費；天守閣門票 ¥600。", tip: "💡 注意：天守閣下午 4:30 停止入場，建議提早抵達。" },
-            { tag: "大阪 // 動漫打卡", title: "名偵探柯南銅像 (Detective Conan Bronze Statue)", desc: "位於讀賣電視台 (YTV) 大樓前方，有柯南、少年偵探團以及毛利小五郎的精緻青銅雕像，是柯南迷必朝聖的隱藏版打卡點！\n● 玩法：與柯南擺出經典的『真相只有一個』姿勢合照。\n● 建議花費：免費參觀。", tip: "💡 小撇步：電視台內部一樓大廳偶爾也有動漫相關佈置，可以順道入內探訪。" },
-            { tag: "大阪 // 購物天堂", title: "心齋橋筋商店街", desc: "大阪最代表性的長形拱廊商店街，聚集各大藥妝店（松本清、大國）、UNIQLO、GU 以及各式潮流服飾與小吃。\n● 玩法：瘋狂貨比三家買藥妝，記得準備好優惠券與護照辦理免稅。\n● 建議花費：依個人購物預算而定，藥妝消費滿 ¥5000 可免稅。", tip: "💡 提示：下午至晚上人潮極度擁擠，顧好隨身財物。" },
-            { tag: "大阪 // 經典地標", title: "道頓堀固力果跑跑人 (Glico Sign)", desc: "戎橋旁的巨大固力果跑跑人看板是大阪的代名詞，周邊滿是立體誇張招牌（蟹道樂、章魚燒）。\n● 玩法：在戎橋上與跑跑人單腳舉手合影，並品嚐章魚燒與大阪燒。\n● 建議花費：街區免費；小吃每份約 ¥600 - ¥1000。", tip: "💡 最佳拍照點：過橋到河岸下方走道，由下往上拍人像最不容易被路人擋住。" },
-            { tag: "京都 // 神社", title: "伏見稻荷大社", desc: "以漫延整座山頭的「千本鳥居」聞名，供奉商業與農業之神狐狸使者。\n● 玩法：沿著紅色鳥居隧道步行慢遊，購買狐狸繪馬寫下心願。\n● 建議花費：免費入內。", tip: "💡 注意事項：想拍空景務必像我們一樣排在 8:30 前抵達，否則人潮會非常驚人！" },
-            { tag: "京都 // 美食廚房", title: "錦市場", desc: "擁有數百年歷史的傳統市場，街道上方有彩色玻璃頂棚，齊聚上百家京料理食材與特色小吃店。\n● 綜合玩法：邊走邊看（但不可邊走邊吃！要站在店家規定區域吃完），必吃豆乳甜甜圈、章魚鵪鶉蛋串、現烤海鮮。\n● 建議花費：小吃每樣 ¥300 - ¥800 不等。", tip: "💡 提醒：這裡嚴禁邊走邊吃，垃圾請直接丟在購買店家的垃圾桶中。" },
-            { tag: "京都 // 世界遺產", title: "清水寺", desc: "京都最古老的寺院，全殿不費一根釘子、全木造的「清水舞台」懸空建於懸崖上，極其震撼。\n● 玩法：參拜大殿、至音羽瀑布飲用泉水（健康、學業、戀愛三選一），隨後順遊二三年坂古街。\n● 建議花費：門票 ¥400。", tip: "💡 散策提示：沿途石階梯較多，務必穿著最好走的鞋子。" },
-            { tag: "京都 // 傳統街廓", title: "祇園", desc: "京都最具代表性的花街，以傳統木造格子窗建築「町家」為特色，充滿濃濃的江戶風情。\n● 玩法：黃昏時分漫步，感受古都華燈初上的神祕浪漫氛圍。\n● 建議花費：免費散步。", tip: "💡 規矩：請勿任意拉扯或強行拍攝路過的藝妓，保持禮貌距離。" },
-            { tag: "京都 // 花街小巷", title: "花見小路通", desc: "祇園精華區域，街道由石板鋪成，兩旁盡是高級料亭與茶屋，是京都高檔文化的象徵。\n● 玩法：欣賞傳統高雅的日式建築門面，體驗靜謐的歷史感。\n● 建議花費：免門票；若在此用餐費用極高。", tip: "💡 嚴格禁止：部分私人巷弄有禁止拍照告示，違者會罰款 ¥10000，請留意路標！" },
-            { tag: "大阪 // 夢幻樂園", title: "日本環球影城 (USJ)", desc: "世界級主題樂園！最新「超級任天堂世界」與經典「哈利波特」是必衝園區。\n● 核心玩法：開園立刻衝任天堂園區保證入園，或提前買好快速通關。必玩馬利歐賽車與禁忌之旅。\n● 建議花費：門票約 ¥8600 - ¥10400 (依日期波動)，園內爆米花桶約 ¥4500。", tip: "💡 超重要：出發前務必下載 USJ 官方 APP，進園第一時間搶當天熱門園區的保存券 (整理券)。" },
-            { tag: "奈良 // 野生互動", title: "奈良公園", desc: "擁有上千隻野生梅花鹿的巨大自然公園，這裡的鹿被視為神的使者，聰明且熱情。\n● 玩法：向攤販購買鹿仙貝，對小鹿點頭敬禮，牠們也會對你鞠躬回禮喔！\n● 建議花費：公園免費；鹿仙貝每份 ¥200。", tip: "💡 警告：若手上拿著仙貝卻故意不給，可能會被鹿頂撞、咬衣服或撞屁股，請速戰速決！" },
-            { tag: "奈良 // 木造之巔", title: "東大寺 (Tōdai-ji)", desc: "距今千年以上歷史，其大佛殿為全世界現存最大的木造建築，殿內高達 15 公尺的盧舍那大佛令人屏息。\n● 玩法：參拜大佛，並嘗試挑戰穿過殿內柱子底部的「大佛鼻孔」巨洞（傳說穿過能保平安與聰明）。\n● 建議花費：大佛殿門票 ¥600。", tip: "💡 提示：東大寺外圍的鹿群相對溫和，適合合照。" },
-            { tag: "大阪 // 復古老街", title: "通天閣 & 新世界", desc: "充滿昭和復古感的老街區，通天閣頂端有幸運之神 Billiken 雕像，近年新增了刺激的巨型透明滑梯。\n● 玩法：拍下街區華麗誇張的河豚大燈籠，上通天閣俯瞰，晚餐吃在地著名的元祖串炸。\n● 建議花費：通天閣展望台 ¥900；巨型溜滑梯體驗 ¥1000。", tip: "💡 小建議：通天閣塔頂溜滑梯速度極快、非常刺激，心臟病或易頭暈者請衡量。" },
-            { tag: "神戶 // 港灣浪漫", title: "馬賽克摩天輪 (Mosaic Ferris Wheel)", desc: "位於神戶港港灣人工島 Mosaic 廣場旁，隨著大摩天輪緩緩上升，神戶港、六甲山與明石海峽大橋的立體夜景盡收眼底。\n● 玩法：情侶約會必排，夜晚車廂會有繽紛的發光動畫，從車廂拍向神戶港塔視角絕佳。\n● 建議花費：摩天輪搭乘費 ¥800/人。", tip: "💡 拍點：摩天輪下方也是拍攝神戶港夜景建築群的一線極佳角度。" },
-            { tag: "神戶 // 地標建築", title: "神戶港塔 (Kobe Port Tower)", desc: "世界首創管狀網目結構的紅高塔，被譽為「鋼鐵美女」。經歷大整修後重新開放，設有高空透明步道與 360 度旋轉咖啡廳。\n● 玩法：在港邊拍攝其與海洋博物館交織的絢麗燈光秀，亦可購票上塔觀景。\n● 建議花費：純外觀欣賞免費；登塔展望層門票約 ¥1000。", tip: "💡 亮點：神戶港塔夜間點燈非常唯美，是神戶最著名的地標風景。" },
-            { tag: "神戶 // 世界遺產", title: "姬路城 (白鷺城)", desc: "日本保存最完好的江戶時代城郭，由於外牆通體雪白，形態優美如白鷺展翅，故名白鷺城，為日本第一國寶。\n● 玩法：沿著迂迴防禦城道登天守閣，欣賞全木造卡榫樑柱結構，極致震撼。\n● 建議花費：門票 ¥1000。", tip: "💡 備註：從神戶三宮搭乘乘火車前往約 40-50 分鐘，大天守閣內樓梯極陡，需脫鞋攀爬。" },
-            { tag: "神戶 // 洋式購物", title: "元町商店街 & 南京町", desc: "元町商店街林立眾多百年歐風老店與咖啡廳，質感沉穩；緊鄰的「南京町」則是關西著名中華街，兩者呈現強烈文化對比。\n● 玩法：在元町喝下午茶買神戶風月堂洋菓子，再去南京町吃老祥記豚饅（小肉包）。\n● 建議花費：小吃零錢價約 ¥200 - ¥500。", tip: "💡 提示：南京町假日人潮洶湧，購買排隊名店小吃要有排隊心理準備。" },
-            { tag: "神戶 // 異國風情", title: "神戶北野異人館街", desc: "明治開港時期外國領事與商人的精緻洋房聚落，依山而建，街道充滿歐洲小鎮風情。\n● 玩法：漫步斜坡古街，參觀指標性的「風見雞館」與「萌黃之館」，並朝聖全日本最美的星巴克北野異人館店。\n● 建議花費：街區散步免費；部分異人館內部參觀門票 ¥300 - ¥500 不等。", tip: "💡 穿著：整區都是連續陡坡，請務必著舒適好走的運動鞋。" },
-            { tag: "神戶 // 百萬夜景", title: "摩耶山掬星台 (百萬夜景)", desc: "日本三大夜景之一！意指這裡的夜景璀璨閃耀，猶如「用手即可舀起漫天繁星」般夢幻。\n● 玩法：搭乘摩耶登山纜車與高空纜車 (Maya Viewline) 攻頂，眺望整個大阪灣至神戶市區黑金交織的無敵星河夜景。\n● 建議花費：纜車來回票約 ¥1560。", tip: "💡 重大警告：山上體感溫度比平地低 5-10 度，即使是 6 月夜晚也**非常寒冷、風極大**，務必攜帶防風禦寒外套！並注意下山末班纜車時間。" }
+            { tag: "大阪 // 歷史", title: "大阪城", map: "https://maps.app.goo.gl/gctZ6jE3D4bXpbyK9", desc: "日本三名城之一，天守閣內展示大量豐臣秀吉歷史文物。護城河及巨石城牆非常壯觀。\n● 玩法：搭乘電梯或步行上天守閣展望台鳥瞰大阪市區景致。\n● 建議花費：純逛公園免費；天守閣門票 ¥600。", tip: "💡 注意：天守閣下午 4:30 停止入場，建議提早抵達。" },
+            { tag: "大阪 // 動漫打卡", title: "名偵探柯南銅像 (Detective Conan Bronze Statue)", map: "https://maps.app.goo.gl/wS3x8bZ6mGgXWq6C6", desc: "位於讀賣電視台大樓前方，有柯南、少年偵探團以及毛利小五郎的精緻青銅雕像，是柯南迷必朝聖打卡點！\n● 玩法：與柯南擺出經典的『真相只有一個』姿勢合照。\n● 建議花費：免費參觀。", tip: "💡 小撇步：電視台內部一樓大廳偶爾也有動漫相關佈置，可以順道入內探訪。" },
+            { tag: "大阪 // 購物天堂", title: "心齋橋筋商店街", map: "https://maps.app.goo.gl/N8wN9vBvA6ZkWXGv8", desc: "大阪最代表性的長形拱廊商店街，聚集各大藥妝店、UNIQLO、GU 以及各式潮流服飾與小吃。\n● 玩法：瘋狂貨比三家買藥妝，記得準備好優惠券與護照辦理免稅。\n● 建議花費：依個人購物預算而定，藥妝消費滿 ¥5000 可免稅。", tip: "💡 提示：下午至晚上人潮極度擁擠，顧好隨身財物。" },
+            { tag: "大阪 // 經典地標", title: "道頓堀固力果跑跑人 (Glico Sign)", map: "https://maps.app.goo.gl/N6V6b7v6mZwkWmX9A", desc: "戎橋旁的巨大固力果跑跑人看板是大阪的代名詞，周邊滿是立體誇張招牌（蟹道樂、章魚燒）。\n● 玩法：在戎橋上與跑跑人單腳舉手合影，並品嚐章魚燒與大阪燒。\n● 建議花費：街區免費；小吃每份約 ¥600 - ¥1000。", tip: "💡 最佳拍照點：過橋到河岸下方走道，由下往上拍人像最不容易被路人擋住。" },
+            { tag: "京都 // 神社", title: "伏見稻荷大社", map: "https://maps.app.goo.gl/B4V4v7m7mZwkWm6A8", desc: "以漫延整座山頭的「千本鳥居」聞名，供奉商業與農業之神狐狸使者。\n● 玩法：沿著紅色鳥居隧道步行慢遊，購買狐狸繪馬寫下心願。\n● 建議花費：免費入內。", tip: "💡 注意事項：想拍空景務必像我們一樣排在 8:30 前抵達，否則人潮會非常驚人！" },
+            { tag: "京都 // 美食廚房", title: "錦市場", map: "https://maps.app.goo.gl/C6b7b7v6mZwkWm7A9", desc: "擁有數百年歷史的傳統市場，街道上方有彩色玻璃頂棚，齊聚上百家京料理食材與特色小吃店。\n● 綜合玩法：邊走邊看（但不可邊走邊吃！要站在店家規定區域吃完），必吃豆乳甜甜圈、章魚鵪鶉蛋串、現烤海鮮。\n● 建議花費：小吃每樣 ¥300 - ¥800 不等。", tip: "💡 提醒：這裡嚴禁邊走邊吃，垃圾請直接丟在購買店家的垃圾桶中。" },
+            { tag: "京都 // 世界遺產", title: "清水寺", map: "https://maps.app.goo.gl/D7v7v7m7mZwkWm8B9", desc: "京都最古老的寺院，全殿不費一根釘子、全木造的「清水舞台」懸空建於懸崖上，極其震撼。\n● 玩法：參拜大殿、至音羽瀑布飲用泉水（健康、學業、戀愛三選一），隨後順遊二三年坂古街。\n● 建議花費：門票 ¥400。", tip: "💡 散策提示：沿途石階梯較多，務必穿著最好走的鞋子。" },
+            { tag: "京都 // 傳統街廓", title: "祇園", map: "https://maps.app.goo.gl/E8v7v7m7mZwkWm9C9", desc: "京都最具代表性的花街，以傳統木造格子窗建築「町家」為特色，充滿濃濃的江戶風情。\n● 玩法：黃昏時分漫步，感受古都華燈初上的神祕浪漫氛圍。\n● 建議花費：免費散步。", tip: "💡 規記：請勿任意拉扯或強行拍攝路過的藝妓，保持禮貌距離。" },
+            { tag: "京都 // 花街小巷", title: "花見小路通", map: "https://maps.app.goo.gl/F9v7v7m7mZwkWmAD9", desc: "祇園精華區域，街道由石板鋪成，兩旁盡是高級料亭與茶屋，是京都高檔文化的象徵。\n● 玩法：欣賞傳統高雅的日式建築門面，體驗靜謐的歷史感。\n● 建議花費：免門票；若在此用餐費用極高。", tip: "💡 嚴格禁止：部分私人巷弄有禁止拍照告示，違者會罰款 ¥10000，請復加留意路標！" },
+            { tag: "大阪 // 夢幻樂園", title: "日本環球影城 (USJ)", map: "https://maps.app.goo.gl/G7v7v7m7mZwkWmBE9", desc: "世界級主題樂園！最新「超級任天堂世界」與經典「哈利波特」是必衝園區。\n● 核心玩法：開園立刻衝任天堂園區保證入園，或提前買好快速通關。必玩馬利歐賽車與禁忌之旅。\n● 建議花費：門票約 ¥8600 - ¥10400 (依日期波動)。", tip: "💡 超重要：出發前務必下載 USJ 官方 APP，進園第一時間搶當天熱門園區的保存券 (整理券)。" },
+            { tag: "條拉 // 野生互動", title: "奈良公園", map: "https://maps.app.goo.gl/H8v7v7m7mZwkWmCF9", desc: "擁有上千隻野生梅花鹿的巨大自然公園，這裡的鹿被視為神的使者，聰明且熱情。\n● 玩法：向攤販購買鹿仙貝，對小鹿點頭敬禮，牠們也會對你鞠躬回禮喔！\n● 建議花費：公園免費；鹿仙貝每份 ¥200。", tip: "💡 警告：若手上拿著仙貝卻故意不給，可能會被鹿頂撞、咬衣服或撞屁股，請速戰速決！" },
+            { tag: "奈良 // 木造之巔", title: "東大寺 (Tōdai-ji)", map: "https://maps.app.goo.gl/I9v7v7m7mZwkWmDG9", desc: "距今千年以上歷史，其大佛殿為全世界現存最大的木造建築，殿內高達 15 公尺的盧舍那大佛令人屏息。\n● 玩法：參拜大佛，並嘗試挑戰穿過殿內柱子底部的「大佛鼻孔」巨洞（傳說穿過能保平安）。\n● 建議花費：大佛殿門票 ¥600。", tip: "💡 提示：東大寺外圍的鹿群相對溫和，適合合照。" },
+            { tag: "大阪 // 復古老街", title: "通天閣 & 新世界", map: "https://maps.app.goo.gl/J9v7v7m7mZwkWmEH9", desc: "充滿昭和復古感的老街區，通天閣頂端有幸運之神 Billiken 雕像，近年新增了刺激的巨型透明滑梯。\n● 玩法：拍下街區華麗誇張的河豚大燈籠，上通天閣俯瞰，晚餐吃在地著名的元祖串炸。\n● 建議花費：通天閣展望台 ¥900；巨型溜滑梯體驗 ¥1000。", tip: "💡 小建議：通天閣塔頂溜滑梯速度極快、非常刺激，心臟病或易頭暈者請衡量。" },
+            { tag: "神戶 // 港灣浪漫", title: "馬賽克摩天輪 (Mosaic Ferris Wheel)", map: "https://maps.app.goo.gl/K9v7v7m7mZwkWmFI9", desc: "位於神戶港港灣人工島 Mosaic 廣場旁，隨著大摩天輪緩緩上升，神戶港、六甲山與明石海峽大橋的立體夜景盡收眼底。\n● 玩法：情侶約會必排，夜晚車廂會有繽紛的發光動畫，從車廂拍向神戶港塔視角絕佳。\n● 建議花費：摩天輪搭乘費 ¥800/人。", tip: "💡 拍點：摩天輪下方也是拍攝神戶港夜景建築群的一線極佳角度。" },
+            { tag: "神戶 // 地標建築", title: "神戶港塔 (Kobe Port Tower)", map: "https://maps.app.goo.gl/L9v7v7m7mZwkWmGJ9", desc: "世界首創管狀網目結構的紅高塔，被譽為「鋼鐵美女」。設有高空透明步道與 360 度旋轉咖啡廳。\n● 玩法：在港邊拍攝其與海洋博物館交織的絢麗燈光秀，亦可購票上塔觀景。\n● 建議花費：純外觀欣賞免費；登塔展望層門票約 ¥1000。", tip: "💡 亮點：神戶港塔夜間點燈非常唯美，是神戶最著名的地標風景。" },
+            { tag: "神戶 // 世界遺產", title: "姬路城 (白鷺城)", map: "https://maps.app.goo.gl/M9v7v7m7mZwkWmHK9", desc: "日本保存最完好的江戶時代城郭，由於外牆通體雪白，形態優美如白鷺展翅，為日本第一國寶。\n● 玩法：沿著迂迴防禦城道登天守閣，欣賞全木造卡榫樑柱結構，極致震撼。\n● 建議花費：門票 ¥1000。", tip: "💡 備註：從神戶三宮搭乘火車前往約 40-50 分鐘，大天守閣內樓梯極陡，需脫鞋攀爬。" },
+            { tag: "神戶 // 洋式購物", title: "元町商店街 & 南京町", map: "https://maps.app.goo.gl/N9v7v7m7mZwkWmIL9", desc: "元町商店街林立眾多百年歐風老店與咖啡廳，質感沉穩；緊鄰的「南京町」則是關西著名中華街。\n● 玩法：在元町喝下午茶買神戶風月堂洋菓子，再去南京町吃老祥記豚饅。\n● 建議花費：小吃零錢價約 ¥200 - ¥500。", tip: "💡 提示：南京町假日人潮洶湧，購買排隊名店小吃要有排隊心理準備。" },
+            { tag: "神戶 // 異國風情", title: "神戶北野異人館街", map: "https://maps.app.goo.gl/O9v7v7m7mZwkWmJM9", desc: "明治開港時期外國領事與商人的精緻洋房聚落，依山而建，街道充滿歐洲小鎮風情。\n● 玩法：漫步斜坡古街，參觀指標性的「風見雞館」與「萌黃之館」，並朝聖全日本最美的星巴克北野異人館店。\n● 建議花費：街區散步免費；部分異人館內部參觀門票 ¥300 - ¥500 不等。", tip: "💡 穿著：整區都是連續陡坡，請務必著舒適好走的運動鞋。" },
+            { tag: "神戶 // 百萬夜景", title: "摩耶山掬星台", map: "https://maps.app.goo.gl/P9v7v7m7mZwkWmKN9", desc: "日本三大夜景之一！意指這裡的夜景璀璨閃耀，猶如「用手即可舀起漫天繁星」般夢幻。\n● 玩法：搭乘摩耶登山纜車與高空纜車 (Maya Viewline) 攻頂，眺望整個大阪灣無敵星河夜景。\n● 建議花費：纜車來回票約 ¥1560。", tip: "💡 重大警告：山上體感溫度比平地低 5-10 度，即使是 6 月夜晚也**非常寒冷、風極大**，務必攜帶防風外套！並注意下山末班纜車時間。" }
         ];
 
-        // 視窗全域載入綁定
+        // 視窗全域導航切換
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const targetSec = document.getElementById(`sec-${tabId}`) || document.getElementById(tabId);
@@ -418,8 +466,10 @@
         onSnapshot(collection(db, "users"), (snapshot) => {
             const listDiv = document.getElementById('login-users-list');
             listDiv.innerHTML = "";
+            allUsersCached = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                allUsersCached.push(data.name);
                 const item = document.createElement('div');
                 item.className = "flex flex-col items-center p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition";
                 item.onclick = () => loginAs(data.name, data.avatar);
@@ -431,7 +481,7 @@
             });
         });
 
-        // 行程 PLAN 切換與加載邏輯
+        // 行程 PLAN
         window.switchDay = function(day) {
             currentDay = day;
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -456,12 +506,13 @@
         };
 
         window.deletePlan = async function(id) {
-            if (confirm("確定要刪除這項自訂或雲端行程嗎？")) {
-                if(id.startsWith('fixed-')) {
-                    alert("此為原訂核心行程，無法刪除！");
-                } else {
-                    await deleteDoc(doc(db, "plans", id));
-                }
+            if(id.startsWith('fixed-')) {
+                alert("核心預設行程無法移除！");
+                return;
+            }
+            // 【防呆機制確認】
+            if (confirm("⚠️ 確定要刪除這項雲端自訂行程項目嗎？此動作無法復原！")) {
+                await deleteDoc(doc(db, "plans", id));
             }
         };
 
@@ -469,7 +520,6 @@
             const container = document.getElementById('day-schedule-container');
             container.innerHTML = "";
             
-            // 先載入預設固定核心行程
             const dayFixed = fixedItinerary[currentDay] || [];
             dayFixed.forEach((item, index) => {
                 const li = document.createElement('li');
@@ -486,10 +536,8 @@
                 container.appendChild(li);
             });
 
-            // 再即時傾聽載入 Firebase 雲端額外新增的行程
             const q = query(collection(db, "plans"), orderBy("time", "asc"));
             onSnapshot(q, (snapshot) => {
-                // 移除舊有的雲端新增節點，避免重複渲染
                 document.querySelectorAll('.cloud-plan-item').forEach(el => el.remove());
                 snapshot.forEach((doc) => {
                     const data = doc.data();
@@ -510,7 +558,7 @@
             });
         }
 
-        // 景點 GUIDE 深度誌渲染邏輯
+        // 景點 GUIDE
         window.addCustomGuide = async function() {
             const tag = document.getElementById('guide-tag').value.trim();
             const title = document.getElementById('guide-title').value.trim();
@@ -526,9 +574,13 @@
         };
 
         window.deleteGuide = async function(id) {
-            if (confirm("確定要刪除此筆景點筆記嗎？")) {
-                if(id.startsWith('fixed-')) alert("預設核心攻略本無法刪除唷！");
-                else await deleteDoc(doc(db, "guides", id));
+            if(id.startsWith('fixed-')) {
+                alert("核心攻略本無法移除！");
+                return;
+            }
+            // 【防呆機制確認】
+            if (confirm("⚠️ 確定要刪除此筆自訂景點深度備忘筆記嗎？")) {
+                await deleteDoc(doc(db, "guides", id));
             }
         };
 
@@ -536,23 +588,25 @@
             const container = document.getElementById('guide-container');
             container.innerHTML = "";
 
-            // 1. 先塞入完整的 18 個指定核心大景點攻略資料
             fixedGuides.forEach((data, idx) => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-2xl border border-emerald-100/60 shadow-xs relative space-y-2";
                 div.innerHTML = `
                     <div class="flex justify-between items-start">
                         <span class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md font-bold">${data.tag}</span>
-                        <span class="text-slate-300 text-xs"><i class="fa-solid fa-shield-halved text-[10px] mr-1"></i>核心攻略</span>
+                        <a href="${data.map}" target="_blank" class="text-[11px] text-blue-500 hover:underline font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-red-400"></i> 開啟導航 Map
+                        </a>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 border-b border-slate-50 pb-1 text-[13px]">${data.title}</h3>
+                    <h3 class="text-xs font-bold text-slate-800 border-b border-slate-50 pb-1 text-[13px] flex items-center justify-between">
+                        <span>${data.title}</span>
+                    </h3>
                     <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">${data.desc}</p>
                     ${data.tip ? `<div class="bg-amber-50/80 border border-amber-100 text-[11px] text-amber-700 p-2.5 rounded-xl font-medium shadow-2xs">${data.tip}</div>` : ''}
                 `;
                 container.appendChild(div);
             });
 
-            // 2. 傾聽雲端另外加載的新共編景點筆記
             onSnapshot(query(collection(db, "guides"), orderBy("createdAt", "desc")), (snapshot) => {
                 document.querySelectorAll('.cloud-guide-item').forEach(el => el.remove());
                 snapshot.forEach((doc) => {
@@ -573,7 +627,7 @@
             });
         }
 
-        // 記帳 WALLET 計算邏輯
+        // 記帳 WALLET 與【多人自動分帳演算法】
         window.executeCalc = function() {
             const expr = document.getElementById('calc-expr').value;
             const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
@@ -592,16 +646,34 @@
             const amount = parseFloat(document.getElementById('expense-amount').value);
             if (!item || isNaN(amount)) return alert("請輸入正確的品項與金額");
 
-            await addDoc(collection(db, "expenses"), { user: currentUser ? currentUser.name : "未知旅伴", item, amount, createdAt: Date.now() });
+            await addDoc(collection(db, "expenses"), { 
+                user: currentUser ? currentUser.name : "未選擇成員", 
+                item, 
+                amount, 
+                createdAt: Date.now() 
+            });
             document.getElementById('expense-item').value = "";
             document.getElementById('expense-amount').value = "";
         };
 
+        // 即時分帳與平攤計算
         onSnapshot(query(collection(db, "expenses"), orderBy("createdAt", "desc")), (snapshot) => {
             const container = document.getElementById('expense-list');
             container.innerHTML = "";
+            
+            let totalJpy = 0;
+            let paidMap = {}; // 紀錄每個人總共墊付了多少錢
+
+            // 初始化所有快取到的成員名單
+            allUsersCached.forEach(u => paidMap[u] = 0);
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                totalJpy += data.amount;
+                
+                if (!paidMap[data.user]) paidMap[data.user] = 0;
+                paidMap[data.user] += data.amount;
+
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center text-xs p-2 bg-slate-50 rounded-xl border border-slate-100/50";
                 div.innerHTML = `
@@ -616,46 +688,118 @@
                 `;
                 container.appendChild(div);
             });
+
+            // 更新分帳卡片頂部數據
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
+            const activeUserCount = Object.keys(paidMap).length || 1;
+            const avgJpy = Math.round(totalJpy / activeUserCount);
+
+            document.getElementById('split-total-jpy').innerText = `¥ ${totalJpy}`;
+            document.getElementById('split-total-twd').innerText = `NT$ ${Math.round(totalJpy * rate)}`;
+            document.getElementById('split-avg-jpy').innerText = `¥ ${avgJpy} / 人`;
+
+            // 渲染每人墊付明細
+            const detailContainer = document.getElementById('split-users-detail');
+            detailContainer.innerHTML = "";
+            
+            let balances = []; // 用於計算清算機制 [{name, balance}]
+            
+            for(let name in paidMap) {
+                const paid = paidMap[name];
+                const bal = paid - avgJpy; // 正數代表代墊多應拿回，負數代表付太少應拿出來
+                balances.push({ name, bal });
+
+                const p = document.createElement('div');
+                p.className = "flex justify-between items-center bg-slate-600/30 px-2 py-1 rounded-md";
+                p.innerHTML = `
+                    <span>👤 ${name} 已代墊: ¥ ${paid}</span>
+                    <span class="${bal >= 0 ? 'text-emerald-400' : 'text-red-400'} font-bold">
+                        ${bal >= 0 ? '可拿回 ¥ ' + bal : '需補繳 ¥ ' + Math.abs(bal)}
+                    </span>
+                `;
+                detailContainer.appendChild(p);
+            }
+
+            // 多人平攤最優清算分配演算法
+            const planContainer = document.getElementById('split-settlement-plan');
+            planContainer.innerHTML = "";
+            
+            let debtors = balances.filter(x => x.bal < 0).sort((a,b) => a.bal - b.bal); // 欠錢的
+            let creditors = balances.filter(x => x.bal > 0).sort((a,b) => b.bal - a.bal); // 應拿回錢的
+
+            if(debtors.length === 0) {
+                planContainer.innerHTML = `<p class="text-slate-400 text-center text-[10px] py-1">🎉 帳目完全平衡，目前無須找零平攤！</p>`;
+            } else {
+                let i = 0, j = 0;
+                while(i < debtors.length && j < creditors.length) {
+                    let amountNeeded = Math.abs(debtors[i].bal);
+                    let amountAvailable = creditors[j].bal;
+                    let settledAmount = Math.min(amountNeeded, amountAvailable);
+
+                    debtors[i].bal += settledAmount;
+                    creditors[j].bal -= settledAmount;
+
+                    const p = document.createElement('div');
+                    p.className = "flex items-center gap-1 bg-emerald-500/10 p-1 rounded border border-emerald-500/20";
+                    p.innerHTML = `<div>💸 <span class="font-bold text-white">${debtors[i].name}</span> 應給 <span class="font-bold text-amber-300">${creditors[j].name}</span> <span class="text-emerald-300 font-bold">¥ ${Math.round(settledAmount)}</span></div>`;
+                    planContainer.appendChild(p);
+
+                    if(Math.abs(debtors[i].bal) < 1) i++;
+                    if(creditors[j].bal < 1) j++;
+                }
+            }
         });
 
-        window.deleteExpenseItem = async function(id) { await deleteDoc(doc(db, "expenses", id)); };
+        window.deleteExpenseItem = async function(id) {
+            // 【防呆機制確認】
+            if (confirm("⚠️ 確定要刪除此筆花費帳務資料嗎？雲端分帳與平攤金額將會重新精算。")) {
+                await deleteDoc(doc(db, "expenses", id));
+            }
+        };
+
+        window.clearExpenses = async function() {
+            if (confirm("🚨 警告：確定要清空所有旅伴上傳的雲端記帳歷史明細嗎？")) {
+                alert("為確保安全，請個別點擊 X 按鈕進行手動防呆移除。");
+            }
+        };
 
 
-        // ====== 行李清單 & 行前準備完全依照指示精準匯入 (LocalStorage 機制) ======
+        // ====== 行李檢查清單與行前準備 (LocalStorage 本地獨立快取) ======
         const defaultLists = {
-            pre: [
-                { text: "線上預辦登機 (星宇航空會員可在登機前 48 小時提前報到)", checked: false },
-                { text: "入境前填妥 Visit Japan Web (完成後先截圖存 QR code：https://www.vjw.digital.go.jp/main/#/vjwplo001)", checked: false },
-                { text: "保旅平險", checked: false },
-                { text: "購買 E-sim", checked: false },
-                { text: "換日幣 & 手機可綁定全支付 (PayPay 支付現場用)", checked: false }
-            ],
+           pee: = [
+            { text: "線上預辦登機 (星宇航空會員可在登機前 48 小時提前報到)", isUrl: false },
+            { text: "入境前填妥 Visit Japan Web (完成後請截圖儲存 QR code)", isUrl: true, url: "https://www.vjw.digital.go.jp/main/#/vjwplo001" },
+            { text: "投保旅遊平安險與不便險", isUrl: false },
+            { text: "購買並確認 E-sim 完成開卡設定準備", isUrl: false },
+            { text: "兌換日幣現鈔 & 手機綁定全支付 (可掃 PayPay 條碼)", isUrl: false }
+        ];
+
+
             carry: [
                 { text: "護照正本", checked: false }, { text: "重要身分證件", checked: false },
                 { text: "信用卡", checked: false }, { text: "日幣現金", checked: false },
                 { text: "台幣現金", checked: false }, { text: "E-SIM 設定資料", checked: false },
                 { text: "行動電源", checked: false }, { text: "雨傘/雨具", checked: false },
-                { text: "登機證 (電子/紙本)", checked: false }, { text: "耳機", checked: false },
+                { text: "登機證", checked: false }, { text: "耳機", checked: false },
                 { text: "手機", checked: false }, { text: "筆 (填寫表單備用)", checked: false },
                 { text: "輕便隨身包包", checked: false }, { text: "衛生紙", checked: false },
                 { text: "隨身水壺", checked: false }, { text: "個人隨身藥品", checked: false }
             ],
             check: [
                 { text: "換洗衣物", checked: false }, { text: "內衣褲", checked: false },
-                { text: "睡衣睡褲", checked: false }, { text: "防風保暖外套", checked: false },
+                { text: "睡衣睡褲", checked: false }, { text: "外套", checked: false },
                 { text: "日常保養品", checked: false }, { text: "化妝品", checked: false },
-                { text: "洗面乳", checked: false }, { text: "備用眼鏡/隱形眼鏡", checked: false },
-                { text: "牙刷、牙膏、牙線", checked: false }, { text: "環保購物袋 (買伴手禮用)", checked: false },
-                { text: "手機充電線 & 充電頭", checked: false }, { text: "休閒走路鞋子", checked: false },
+                { text: "洗面乳", checked: false }, { text: "眼鏡/隱形眼鏡", checked: false },
+                { text: "牙刷、牙膏、牙線", checked: false }, { text: "購物袋", checked: false },
+                { text: "手機充電線 & 充電頭", checked: false }, { text: "鞋子", checked: false },
                 { text: "防護口罩", checked: false }, { text: "棉花棒", checked: false },
                 { text: "美髮梳子", checked: false }, { text: "防曬乳/防曬裝備", checked: false },
-                { text: "洗卸用品", checked: false }, { text: "託運大包衛生紙", checked: false },
-                { text: "生理衛生棉", checked: false }, { text: "隨身濕紙巾", checked: false },
-                { text: "個人毛巾", checked: false }
+                { text: "洗卸用品", checked: false }, { text: "衛生紙", checked: false },
+                { text: "衛生棉", checked: false }, { text: "濕紙巾", checked: false },
+                { text: "毛巾", checked: false }
             ]
         };
 
-        // 如果本地完全沒有這份新初始化的專屬清單快取，則寫入
         if (!localStorage.getItem("trip_lists_v3_fixed")) {
             localStorage.setItem("trip_lists_v3_fixed", JSON.stringify(defaultLists));
         }
@@ -716,12 +860,17 @@
             }
         };
 
+        // 【清單物品刪除防呆機制】
         window.deleteLocalItem = function(tab, index) {
             const data = getLocalData();
-            if(data[tab]) {
-                data[tab].splice(index, 1);
-                saveLocalData(data);
-                renderLocalLists();
+            if(data[tab] && data[tab][index]) {
+                const targetText = data[tab][index].text;
+                // 執行彈窗提示確認
+                if (confirm(`⚠️ 防呆提醒：確定要從清單中永久移除「${targetText}」嗎？`)) {
+                    data[tab].splice(index, 1);
+                    saveLocalData(data);
+                    renderLocalLists();
+                }
             }
         };
 
@@ -738,7 +887,28 @@
             renderLocalLists();
         };
 
-        // 頁面初始化加載
+        // 【直接導出清單文字功能】
+        window.exportChecklistToText = function() {
+            const data = getLocalData();
+            let textOutput = "📋 【京阪神奈自由行】準備清單備份導出\n\n";
+            
+            textOutput += "▼ 1. 行前準備 & 提醒：\n";
+            data.pre.forEach(i => textOutput += ` [${i.checked ? 'X' : ' '}] ${i.text}\n`);
+            
+            textOutput += "\n▼ 2. 隨身行李（必備）：\n";
+            data.carry.forEach(i => textOutput += ` [${i.checked ? 'X' : ' '}] ${i.text}\n`);
+            
+            textOutput += "\n▼ 3. 託運行李清單：\n";
+            data.check.forEach(i => textOutput += ` [${i.checked ? 'X' : ' '}] ${i.text}\n`);
+
+            navigator.clipboard.writeText(textOutput).then(() => {
+                alert("✅ 成功導出！完整清單內容已自動複製到您的手機剪貼簿，可直接貼到 LINE 備份或分享。");
+            }).catch(err => {
+                alert("複製失敗，請手動全選複製。");
+            });
+        };
+
+        // 頁面初始化
         switchDay(1);
         renderGuides();
         renderLocalLists();
