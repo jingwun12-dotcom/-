@@ -24,7 +24,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        /* 拖曳時被選中項目的樣式 */
         .sortable-ghost {
             opacity: 0.4;
             background-color: #f0fdf4 !important;
@@ -33,18 +32,55 @@
 </head>
 <body class="pb-24 max-w-md mx-auto min-h-screen shadow-xl bg-[#EBF3F0] relative">
 
+    <div id="login-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-6 text-center">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-700 tracking-wide">誰要準備出發？ ✈️</h2>
+                <p class="text-xs text-slate-400 mt-1">請選擇您的旅伴身分以同步記帳與行程</p>
+            </div>
+            
+            <div id="login-users-list" class="grid grid-cols-3 gap-3 py-2"></div>
+
+            <div class="border-t border-slate-100 pt-4 space-y-3">
+                <button onclick="toggleAddUserForm(true)" class="w-full border-2 border-dashed border-emerald-300 text-emerald-600 hover:bg-emerald-50 text-xs py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-user-plus"></i> 建立新成員身分
+                </button>
+            </div>
+
+            <div id="add-user-form" class="hidden text-left bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <h4 class="text-xs font-bold text-slate-600"><i class="fa-solid fa-id-card mr-1"></i> 設定新成員資料</h4>
+                <div class="flex items-center gap-3">
+                    <label class="relative cursor-pointer group flex-shrink-0">
+                        <div class="w-14 h-14 bg-slate-200 rounded-full border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-slate-400">
+                            <img id="new-avatar-preview" src="" class="w-full h-full object-cover hidden">
+                            <i id="new-avatar-icon" class="fa-solid fa-camera text-sm"></i>
+                        </div>
+                        <input type="file" id="new-user-avatar" accept="image/*" class="hidden" onchange="previewNewUserAvatar(event)">
+                    </label>
+                    <div class="flex-1">
+                        <input type="text" id="new-user-name" placeholder="請輸入旅行暱稱..." class="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button onclick="toggleAddUserForm(false)" class="w-1/2 bg-slate-200 text-slate-500 text-xs py-2 rounded-xl font-medium">取消</button>
+                    <button onclick="createNewUser()" class="w-1/2 bg-emerald-400 text-white text-xs py-2 rounded-xl font-bold shadow-xs">確認建立</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header class="bg-white/80 backdrop-blur-md border-b border-emerald-100 p-4 sticky top-0 z-50 flex justify-between items-center rounded-b-3xl shadow-sm">
         <div>
             <h1 class="text-xl font-bold tracking-wide text-slate-700">旅行指南 🌿</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">2026.06.01 - 06.06 // 京阪神奈</p>
         </div>
-        <div class="bg-gradient-to-r from-emerald-200 to-blue-200 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full shadow-inner">
-            Kansai 2026
+        <div onclick="showLoginOverlay()" class="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 pl-2 pr-3 py-1 rounded-full shadow-xs cursor-pointer hover:opacity-90 transition">
+            <img id="current-user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=me" class="w-6 h-6 rounded-full border border-white bg-slate-200 object-cover">
+            <span id="current-user-name" class="text-xs font-bold text-slate-600">載入中...</span>
         </div>
     </header>
 
     <main class="p-4">
-        
         <section id="sec-plan" class="tab-content space-y-4">
             <div class="bg-white/90 p-4 rounded-2xl border border-emerald-50 shadow-sm space-y-3">
                 <div class="flex items-center space-x-2 border-b border-slate-100 pb-2">
@@ -109,9 +145,7 @@
                 <h2 class="text-lg font-bold text-slate-700">📚 景點深度誌</h2>
                 <span class="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-semibold">隨身攻略本</span>
             </div>
-
             <div id="guide-container" class="space-y-4"></div>
-
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                 <h3 class="font-bold text-sm text-slate-700 flex items-center"><i class="fa-solid fa-bookmark text-blue-400 mr-1.5"></i>新增自訂景點深度筆記</h3>
                 <div class="grid grid-cols-2 gap-2">
@@ -169,19 +203,11 @@
                 <div id="group-fields" class="space-y-2">
                     <div>
                         <label class="text-[10px] text-slate-400 font-bold block mb-1">誰先代墊付錢？</label>
-                        <select id="expense-payer" class="w-full bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl text-xs focus:outline-none">
-                            <option value="我">我</option>
-                            <option value="小明">小明</option>
-                            <option value="小華">小華</option>
-                        </select>
+                        <select id="expense-payer" class="w-full bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl text-xs focus:outline-none"></select>
                     </div>
                     <div>
                         <label class="text-[10px] text-slate-400 font-bold block mb-1">分攤給誰？（可多選）</label>
-                        <div class="flex gap-4 p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="expense-sharer" value="我" checked class="rounded border-slate-300 text-emerald-500"> 我</label>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="expense-sharer" value="小明" checked class="rounded border-slate-300 text-emerald-500"> 小明</label>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="expense-sharer" value="小華" checked class="rounded border-slate-300 text-emerald-500"> 小華</label>
-                        </div>
+                        <div id="expense-sharers-box" class="flex flex-wrap gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs"></div>
                     </div>
                 </div>
 
@@ -207,6 +233,27 @@
                 <div class="border-t border-slate-100 pt-2 mt-3 flex justify-between text-xs font-bold text-slate-700">
                     <span>雙幣消費總計：</span>
                     <span id="expense-total-all" class="text-emerald-600">¥ 0 (NT$ 0)</span>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl text-white shadow-md space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-scale-balanced text-emerald-400"></i>
+                        <h3 class="font-bold text-sm tracking-wide text-slate-100">⚖️ 債務抵銷與最優結算</h3>
+                    </div>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/30">金流最優化</span>
+                </div>
+                
+                <div id="netting-dashboard" class="space-y-2 text-xs">
+                    </div>
+
+                <div class="bg-white/5 rounded-xl p-3 border border-white/10 space-y-2">
+                    <p class="text-[11px] font-bold text-slate-400 tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> 最終金流簡化建議 (日幣結算)
+                    </p>
+                    <div id="netting-suggestions" class="text-xs space-y-2 text-slate-200">
+                        </div>
                 </div>
             </div>
         </section>
@@ -243,7 +290,6 @@
             <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm space-y-3">
                 <h3 class="font-bold text-sm text-slate-700 flex items-center"><i class="fa-solid fa-map text-blue-400 mr-2"></i>🗺️ 京阪神奈交通路線圖</h3>
                 <p class="text-xs text-slate-400 leading-relaxed">點擊下方連結可直接在手機上開啟各官方網站的最新高畫質 PDF 路線圖：</p>
-                
                 <div class="grid grid-cols-1 gap-2 pt-1">
                     <a href="https://global.trafficinfo.westjr.co.jp/tc/kansai" target="_blank" class="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100 hover:bg-blue-50 transition text-xs">
                         <span class="font-bold text-blue-700"><i class="fa-solid fa-train mr-2"></i>JR 西日本 (近畿全區網)</span>
@@ -282,7 +328,6 @@
                 </div>
             </div>
         </section>
-
     </main>
 
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-2.5 z-50 rounded-t-3xl shadow-lg">
@@ -309,7 +354,7 @@
     </nav>
 
     <script>
-        // 預設核心內建行程資料
+        // 內建核心初始資料
         const defaultTripData = {
             1: [
                 { time: "06:30", title: "桃園國際機場 第一航廈", desc: "準備辦理行李托運與出境通關手續。", isImportant: true },
@@ -355,7 +400,6 @@
             ]
         };
 
-        // 預設景點誌
         const defaultGuideData = [
             { tag: "Osaka // 歷史浪漫", title: "大阪城天守閣", desc: "作為大阪的至高地 Landmark..." },
             { tag: "Kyoto // 千年信仰", title: "伏見稻荷大社", desc: "全日本3萬座稻荷神社的總本宮..." },
@@ -369,7 +413,6 @@
             { tag: "Kobe // 異國風情", title: "神戶北野異人館", desc: "位在兵庫縣神戶的「神戶北野異人館」是一處洋溢著異國情調..." }
         ];
 
-        // 預設打包清單（加入 isDefault 標記用來限制刪除功能）
         const defaultChecklistData = {
             pre: [
                 { text: "線上預辦登機 (星宇航空會員可在登機前 48 小時提前報到)", checked: false, isDefault: true },
@@ -379,152 +422,225 @@
                 { text: "兌換日幣現鈔 & 手機綁定全支付 (可掃 PayPay 條碼)", checked: false, isDefault: true }
             ],
             carry: [
-                { text: "護照", checked: false, isDefault: true }, { text: "證件", checked: false, isDefault: true }, { text: "信用卡", checked: false, isDefault: true }, 
-                { text: "日幣", checked: false, isDefault: true }, { text: "台幣", checked: false, isDefault: true }, { text: "耳機", checked: false, isDefault: true }, 
-                { text: "手機", checked: false, isDefault: true }, { text: "筆", checked: false, isDefault: true }, { text: "輕便包包", checked: false, isDefault: true }, 
-                { text: "水壺", checked: false, isDefault: true }, { text: "行動電源", checked: false, isDefault: true }, { text: "折疊傘", checked: false, isDefault: true }, 
-                { text: "個人常備藥品", checked: false, isDefault: true }
+                { text: "護照與護照影本", checked: false, isDefault: true },
+                { text: "日幣現鈔與常用信用卡", checked: false, isDefault: true },
+                { text: "行動電源 (不可放託運行李！)", checked: false, isDefault: true },
+                { text: "手機/相機充電線與轉接頭", checked: false, isDefault: true }
             ],
             check: [
-                { text: "換洗衣物", checked: false, isDefault: true }, { text: "外套", checked: false, isDefault: true }, { text: "日常保養品、化妝品", checked: false, isDefault: true }, 
-                { text: "眼鏡/隱形眼鏡", checked: false, isDefault: true }, { text: "牙刷牙膏牙線", checked: false, isDefault: true }, { text: "購物袋", checked: false, isDefault: true }, 
-                { text: "口罩", checked: false, isDefault: true }, { text: "手機充電線器", checked: false, isDefault: true }, { text: "鞋子", checked: false, isDefault: true }, 
-                { text: "梳子", checked: false, isDefault: true }, { text: "洗卸用品", checked: false, isDefault: true }, { text: "衛生紙、衛生棉", checked: false, isDefault: true }, 
-                { text: "防曬裝備", checked: false, isDefault: true }, { text: "毛巾", checked: false, isDefault: true }
+                { text: "換洗衣物與輕便外套 (摩耶山保暖用)", checked: false, isDefault: true },
+                { text: "個人盥洗用品與常備藥品", checked: false, isDefault: true },
+                { text: "雨傘/雨衣 (防晴雨兩用)", checked: false, isDefault: true },
+                { text: "預留空間的空白行李箱 (裝戰利品用)", checked: false, isDefault: true }
             ]
         };
 
-        let tripData = {};
-        let guideData = [];
-        let checklistData = {};
-        let expenses = [];
-        let activeDay = 1;
-        let activeListTab = 'pre';
-        let currentCompressedImgBase64 = "";
-        let walletMode = 'group'; // 預設群組模式
+        // 預設三大基本旅伴
+        const initialUsers = [
+            { id: "user_1", name: "我", avatar: "https://api.dicebear.com/7.x/fun-notion/svg?seed=me" },
+            { id: "user_2", name: "小明", avatar: "https://api.dicebear.com/7.x/fun-notion/svg?seed=ming" },
+            { id: "user_3", name: "小華", avatar: "https://api.dicebear.com/7.x/fun-notion/svg?seed=hua" }
+        ];
 
+        // 全域變數定義
+        let currentDay = 1;
+        let walletMode = 'group'; // 'group' 或 'personal'
+        let uploadedImgBase64 = "";
+
+        // 初始化載入
         window.onload = function() {
-            if (localStorage.getItem('tripData_v2')) {
-                tripData = JSON.parse(localStorage.getItem('tripData_v2'));
-            } else {
-                tripData = defaultTripData;
-                saveTripToStorage();
+            if (!localStorage.getItem('users')) {
+                localStorage.setItem('users', JSON.stringify(initialUsers));
+                localStorage.setItem('current_user', JSON.stringify(initialUsers[0]));
             }
+            if (!localStorage.getItem('trip_data')) localStorage.setItem('trip_data', JSON.stringify(defaultTripData));
+            if (!localStorage.getItem('guide_data')) localStorage.setItem('guide_data', JSON.stringify(defaultGuideData));
+            if (!localStorage.getItem('checklist_data')) localStorage.setItem('checklist_data', JSON.stringify(defaultChecklistData));
+            if (!localStorage.getItem('expenses')) localStorage.setItem('expenses', JSON.stringify([]));
+            if (!localStorage.getItem('memo')) localStorage.setItem('memo', '');
 
-            if (localStorage.getItem('guideData_v2')) {
-                guideData = JSON.parse(localStorage.getItem('guideData_v2'));
-            } else {
-                guideData = defaultGuideData;
-                saveGuideToStorage();
-            }
-
-            if (localStorage.getItem('checklistData_v2')) {
-                checklistData = JSON.parse(localStorage.getItem('checklistData_v2'));
-            } else {
-                checklistData = defaultChecklistData;
-                saveChecklistToStorage();
-            }
-
-            if (localStorage.getItem('expenses_v2')) {
-                expenses = JSON.parse(localStorage.getItem('expenses_v2'));
-            }
-
-            switchDay(1);
-            renderGuide();
+            renderCurrentUser();
+            renderLoginUsersList();
+            renderSchedule();
+            renderGuides();
             renderChecklists();
-            loadMemo();
-            loadExpenses();
-            initSortable();
+            renderExpenses();
+            initWalletSelectors();
+            
+            // 檢查是否需要彈出身分選擇窗
+            if (!sessionStorage.getItem('identity_chosen')) {
+                showLoginOverlay();
+            } else {
+                hideLoginOverlay();
+            }
         };
 
-        function saveTripToStorage() { localStorage.setItem('tripData_v2', JSON.stringify(tripData)); }
-        function saveGuideToStorage() { localStorage.setItem('guideData_v2', JSON.stringify(guideData)); }
-        function saveChecklistToStorage() { localStorage.setItem('checklistData_v2', JSON.stringify(checklistData)); }
-        function saveExpensesToStorage() { localStorage.setItem('expenses_v2', JSON.stringify(expenses)); }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-emerald-500');
-                btn.classList.add('text-slate-400');
-            });
-            document.getElementById(`nav-${tabName}`).classList.remove('text-slate-400');
-            document.getElementById(`nav-${tabName}`).classList.add('text-emerald-500');
+        // 身分功能
+        function renderCurrentUser() {
+            const user = JSON.parse(localStorage.getItem('current_user'));
+            if(user) {
+                document.getElementById('current-user-name').innerText = user.name;
+                document.getElementById('current-user-avatar').src = user.avatar;
+            }
         }
 
-        // 行程管理切換與渲染
-        function switchDay(dayNum) {
-            activeDay = dayNum;
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                btn.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200";
+        function showLoginOverlay() {
+            document.getElementById('login-overlay').classList.remove('hidden');
+            renderLoginUsersList();
+        }
+        function hideLoginOverlay() {
+            document.getElementById('login-overlay').classList.add('hidden');
+        }
+
+        function renderLoginUsersList() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const container = document.getElementById('login-users-list');
+            container.innerHTML = "";
+            users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center p-3 rounded-2xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition group";
+                div.onclick = () => selectIdentity(u);
+                div.innerHTML = `
+                    <img src="${u.avatar}" class="w-12 h-12 rounded-full border border-slate-200 group-hover:scale-105 transition object-cover bg-slate-50">
+                    <span class="text-xs font-bold text-slate-600 mt-2">${u.name}</span>
+                `;
+                container.appendChild(div);
             });
+        }
+
+        function selectIdentity(user) {
+            localStorage.setItem('current_user', JSON.stringify(user));
+            sessionStorage.setItem('identity_chosen', 'true');
+            renderCurrentUser();
+            initWalletSelectors(); // 重新整理記帳介面的下拉選單
+            hideLoginOverlay();
+        }
+
+        function toggleAddUserForm(show) {
+            const form = document.getElementById('add-user-form');
+            if(show) form.classList.remove('hidden');
+            else form.classList.add('hidden');
+        }
+
+        function previewNewUserAvatar(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('new-avatar-preview').src = event.target.result;
+                    document.getElementById('new-avatar-preview').classList.remove('hidden');
+                    document.getElementById('new-avatar-icon').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function createNewUser() {
+            const nameInput = document.getElementById('new-user-name').value.trim();
+            if(!nameInput) return alert('請輸入暱稱');
+            const previewSrc = document.getElementById('new-avatar-preview').src;
+            const finalAvatar = previewSrc && previewSrc !== window.location.href ? previewSrc : `https://api.dicebear.com/7.x/fun-notion/svg?seed=${Date.now()}`;
+            
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const newUser = { id: 'user_' + Date.now(), name: nameInput, avatar: finalAvatar };
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            document.getElementById('new-user-name').value = "";
+            document.getElementById('new-avatar-preview').src = "";
+            document.getElementById('new-avatar-preview').classList.add('hidden');
+            document.getElementById('new-avatar-icon').classList.remove('hidden');
+            
+            toggleAddUserForm(false);
+            renderLoginUsersList();
+            initWalletSelectors();
+        }
+
+        // 頁籤切換
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.className = "nav-btn flex flex-col items-center space-y-1 text-slate-400");
+            document.getElementById(`nav-${tabId}`).className = "nav-btn flex flex-col items-center space-y-1 text-emerald-500";
+        }
+
+        // PLAN 行程表渲染
+        function switchDay(dayNum) {
+            currentDay = dayNum;
+            document.querySelectorAll('.day-btn').forEach(b => b.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200");
             document.getElementById(`btn-d${dayNum}`).className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-bold text-sm shadow-sm transition-all duration-200";
             renderSchedule();
         }
 
         function renderSchedule() {
+            const tripData = JSON.parse(localStorage.getItem('trip_data'));
             const container = document.getElementById('day-schedule-container');
-            container.innerHTML = '';
-            const items = tripData[activeDay] || [];
+            container.innerHTML = "";
+            
+            if(!tripData[currentDay] || tripData[currentDay].length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center font-medium">今天尚未安排自訂行程 🌿</p>`;
+                return;
+            }
 
-            items.forEach((item, index) => {
+            tripData[currentDay].forEach((item, index) => {
                 const li = document.createElement('li');
-                li.className = `p-3 rounded-2xl bg-white border border-slate-100 shadow-xs relative group ${item.isImportant ? 'ring-2 ring-emerald-300' : ''}`;
+                li.className = `bg-white p-3.5 rounded-2xl border ${item.isImportant ? 'border-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.15)] bg-amber-50/20' : 'border-slate-100 shadow-xs'} relative group transition`;
                 li.innerHTML = `
                     <div class="flex justify-between items-start">
-                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">${item.time}</span>
-                        <button onclick="deletePlan(${index})" class="text-slate-300 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
+                        <span class="inline-block bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-lg text-[10px] tracking-wide">${item.time}</span>
+                        <button onclick="deletePlan(${index})" class="text-slate-300 hover:text-red-400 text-[11px] opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
-                    <h4 class="font-bold text-sm text-slate-700 mt-1">${item.title}</h4>
-                    <p class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</p>
+                    <h4 class="font-bold text-xs text-slate-700 mt-1.5 flex items-center gap-1">
+                        ${item.isImportant ? '✨ ' : ''}${item.title}
+                    </h4>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1 leading-relaxed">${item.desc}</p>
                 `;
                 container.appendChild(li);
             });
         }
 
         function addCustomPlan() {
-            const time = document.getElementById('plan-time').value.trim();
+            const time = document.getElementById('plan-time').value.trim() || "00:00";
             const title = document.getElementById('plan-title').value.trim();
             const desc = document.getElementById('plan-desc').value.trim();
             const isImportant = document.getElementById('plan-important').checked;
+            if(!title) return alert('請輸入景點名稱');
 
-            if (!time || !title) return alert('請填寫時間與標題');
+            const tripData = JSON.parse(localStorage.getItem('trip_data'));
+            tripData[currentDay].push({ time, title, desc, isImportant });
+            tripData[currentDay].sort((a,b) => a.time.localeCompare(b.time));
+            localStorage.setItem('trip_data', JSON.stringify(tripData));
 
-            if (!tripData[activeDay]) tripData[activeDay] = [];
-            tripData[activeDay].push({ time, title, desc, isImportant });
-            saveTripToStorage();
-            renderSchedule();
-
-            document.getElementById('plan-time').value = '';
-            document.getElementById('plan-title').value = '';
-            document.getElementById('plan-desc').value = '';
+            document.getElementById('plan-time').value = "";
+            document.getElementById('plan-title').value = "";
+            document.getElementById('plan-desc').value = "";
             document.getElementById('plan-important').checked = false;
+            renderSchedule();
         }
 
         function deletePlan(index) {
-            if (confirm('確定要刪除這項行程嗎？')) {
-                tripData[activeDay].splice(index, 1);
-                saveTripToStorage();
-                renderSchedule();
-            }
+            const tripData = JSON.parse(localStorage.getItem('trip_data'));
+            tripData[currentDay].splice(index, 1);
+            localStorage.setItem('trip_data', JSON.stringify(tripData));
+            renderSchedule();
         }
 
-        // 深度誌管理
-        function renderGuide() {
+        // GUIDE 深度誌渲染
+        function renderGuides() {
+            const guides = JSON.parse(localStorage.getItem('guide_data')) || [];
             const container = document.getElementById('guide-container');
-            container.innerHTML = '';
-            guideData.forEach((item, index) => {
+            container.innerHTML = "";
+            guides.forEach((g, idx) => {
                 const div = document.createElement('div');
-                div.className = "bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2 relative group";
+                div.className = "bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-2 relative group";
                 div.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">${item.tag}</span>
-                        <button onclick="deleteGuide(${index})" class="text-slate-300 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
+                        <span class="text-[9px] bg-slate-100 text-slate-400 font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">${g.tag}</span>
+                        <button onclick="deleteGuide(${idx})" class="text-slate-200 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
-                    <h3 class="font-bold text-sm text-slate-700">${item.title}</h3>
-                    <p class="text-xs text-slate-500 leading-relaxed">${item.desc}</p>
-                    ${item.tip ? `<div class="bg-amber-50 text-amber-700 text-[11px] p-2.5 rounded-xl border border-amber-100/50 leading-relaxed">${item.tip}</div>` : ''}
+                    <h3 class="font-bold text-xs text-slate-700">${g.title}</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed font-medium">${g.desc}</p>
+                    ${g.tip ? `<div class="bg-amber-50/60 p-2.5 rounded-xl border border-amber-100/50 text-[11px] text-amber-700 leading-relaxed font-medium">${g.tip}</div>` : ''}
                 `;
                 container.appendChild(div);
             });
@@ -535,309 +651,358 @@
             const title = document.getElementById('guide-title').value.trim();
             const desc = document.getElementById('guide-desc').value.trim();
             const tip = document.getElementById('guide-tip').value.trim();
+            if(!title || !desc) return alert('請填寫完整標題與內容');
 
-            if (!title || !desc) return alert('請填寫景點名稱與說明');
+            const guides = JSON.parse(localStorage.getItem('guide_data'));
+            guides.unshift({ tag, title, desc, tip });
+            localStorage.setItem('guide_data', JSON.stringify(guides));
 
-            guideData.push({ tag, title, desc, tip });
-            saveGuideToStorage();
-            renderGuide();
-
-            document.getElementById('guide-tag').value = '';
-            document.getElementById('guide-title').value = '';
-            document.getElementById('guide-desc').value = '';
-            document.getElementById('guide-tip').value = '';
+            document.getElementById('guide-tag').value = "";
+            document.getElementById('guide-title').value = "";
+            document.getElementById('guide-desc').value = "";
+            document.getElementById('guide-tip').value = "";
+            renderGuides();
         }
 
-        function deleteGuide(index) {
-            if (confirm('確定要刪除這筆景點筆記嗎？')) {
-                guideData.splice(index, 1);
-                saveGuideToStorage();
-                renderGuide();
-            }
+        function deleteGuide(idx) {
+            const guides = JSON.parse(localStorage.getItem('guide_data'));
+            guides.splice(idx, 1);
+            localStorage.setItem('guide_data', JSON.stringify(guides));
+            renderGuides();
         }
 
-        // ================= WALLET 核心分帳新邏輯 =================
-        function switchWalletMode(mode) {
-            walletMode = mode;
-            const groupBtn = document.getElementById('wallet-mode-group');
-            const personalBtn = document.getElementById('wallet-mode-personal');
-            const groupFields = document.getElementById('group-fields');
-
-            if (mode === 'group') {
-                groupBtn.className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-bold bg-white text-emerald-600 shadow-xs";
-                personalBtn.className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
-                groupFields.classList.remove('hidden');
-            } else {
-                groupBtn.className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
-                personalBtn.className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-bold bg-white text-emerald-600 shadow-xs";
-                groupFields.classList.add('hidden');
-            }
-        }
-
-        function calcExchange() {
-            const expr = document.getElementById('calc-expr').value;
-            if (!expr) return;
-            executeCalc();
-        }
-
-        function executeCalc() {
-            const expr = document.getElementById('calc-expr').value;
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-            try {
-                // 安全過濾算式，只允許數字與基本加減乘除除運算
-                const cleanExpr = expr.replace(/[^0-9+\-*/().\s]/g, '');
-                const result = Function(`"use strict"; return (${cleanExpr})`)();
-                if (typeof result === 'number' && !isNaN(result)) {
-                    document.getElementById('calc-jpy').innerText = `¥ ${Math.round(result)}`;
-                    document.getElementById('calc-twd').innerText = `NT$ ${Math.round(result * rate)}`;
-                    document.getElementById('expense-amount').value = Math.round(result);
-                }
-            } catch (e) {
-                alert('請輸入正確的數學算式，例如：1200+850');
-            }
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            document.getElementById('img-status').innerText = "讀取中...";
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxW = 150;
-                    const scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    currentCompressedImgBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    
-                    document.getElementById('img-preview').src = currentCompressedImgBase64;
-                    document.getElementById('img-preview-box').classList.remove('hidden');
-                    document.getElementById('img-status').innerText = "照片已就緒";
-                }
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function addExpense() {
-            const item = document.getElementById('expense-item').value.trim();
-            const jpyAmount = parseFloat(document.getElementById('expense-amount').value);
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-
-            if (!item || isNaN(jpyAmount)) return alert('請完整填寫消費品項與金額');
-
-            let logData = {
-                id: Date.now(),
-                item,
-                jpy: jpyAmount,
-                twd: Math.round(jpyAmount * rate),
-                img: currentCompressedImgBase64,
-                mode: walletMode
-            };
-
-            if (walletMode === 'group') {
-                const payer = document.getElementById('expense-payer').value;
-                const sharers = [];
-                document.querySelectorAll('input[name="expense-sharer"]:checked').forEach(cb => sharers.push(cb.value));
-                if (sharers.length === 0) return alert('請至少勾選一個群組分攤成員');
-                
-                logData.payer = payer;
-                logData.sharers = sharers;
-                logData.eachShare = Math.round(jpyAmount / sharers.length);
-            }
-
-            expenses.unshift(logData);
-            saveExpensesToStorage();
-            loadExpenses();
-
-            // 重設欄位
-            document.getElementById('expense-item').value = '';
-            document.getElementById('expense-amount').value = '';
-            document.getElementById('calc-expr').value = '';
-            document.getElementById('img-preview-box').classList.add('hidden');
-            document.getElementById('img-status').innerText = "未選取照片";
-            currentCompressedImgBase64 = "";
-        }
-
-        function loadExpenses() {
-            const list = document.getElementById('expense-list');
-            list.innerHTML = '';
-            let totalJpy = 0;
-            let totalTwd = 0;
-
-            expenses.forEach((exp, idx) => {
-                totalJpy += exp.jpy;
-                totalTwd += exp.twd;
-
-                const div = document.createElement('div');
-                div.className = `p-2.5 rounded-xl border flex gap-3 items-center relative group text-xs ${exp.mode === 'personal' ? 'bg-amber-50/40 border-amber-100' : 'bg-slate-50 border-slate-100'}`;
-                
-                let detailHtml = '';
-                if (exp.mode === 'group') {
-                    detailHtml = `<p class="text-[10px] text-slate-400 mt-0.5">由 <b>${exp.payer}</b> 代墊 | 分攤: ${exp.sharers.join(',')} (每人約 ¥${exp.eachShare})</p>`;
-                } else {
-                    detailHtml = `<p class="text-[10px] text-amber-600 mt-0.5">🔒 個人私帳消費明細</p>`;
-                }
-
-                div.innerHTML = `
-                    ${exp.img ? `<img src="${exp.img}" class="w-9 height-9 object-cover rounded-lg border border-slate-200 shadow-inner">` : `<div class="w-9 h-9 bg-slate-200/50 rounded-lg flex items-center justify-center text-slate-400"><i class="fa-solid fa-receipt"></i></div>`}
-                    <div class="flex-1">
-                        <div class="flex justify-between font-bold text-slate-700 pr-4">
-                            <span>${exp.mode === 'personal' ? '👤 ' : '👥 '}${exp.item}</span>
-                            <span class="text-emerald-600">¥${exp.jpy} <span class="text-[10px] text-slate-400 font-normal">(NT$${exp.twd})</span></span>
-                        </div>
-                        ${detailHtml}
-                    </div>
-                    <button onclick="deleteExpense(${idx})" class="absolute right-2 text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-circle-xmark"></i></button>
-                `;
-                list.appendChild(div);
-            });
-
-            document.getElementById('expense-total-all').innerText = `¥ ${totalJpy} (NT$ ${totalTwd})`;
-        }
-
-        function deleteExpense(index) {
-            if (confirm('確定要刪除這筆花費紀錄嗎？')) {
-                expenses.splice(index, 1);
-                saveExpensesToStorage();
-                loadExpenses();
-            }
-        }
-
-        function clearExpenses() {
-            if (confirm('確定要清除所有在 LocalStorage 的歷史記帳明細嗎？此操作不可逆！')) {
-                expenses = [];
-                saveExpensesToStorage();
-                loadExpenses();
-            }
-        }
-
-        // ================= LISTS 核心防呆與固定清單新邏輯 =================
+        // LISTS 準備清單渲染
+        let activeListTab = 'pre';
         function switchListTab(tab) {
             activeListTab = tab;
             document.querySelectorAll('.list-sub-panel').forEach(p => p.classList.add('hidden'));
             document.getElementById(`list-container-${tab}`).classList.remove('hidden');
-
-            const preBtn = document.getElementById('list-tab-pre');
-            const carryBtn = document.getElementById('list-tab-carry');
-            const checkBtn = document.getElementById('list-tab-check');
-
-            [preBtn, carryBtn, checkBtn].forEach(b => {
-                b.className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400 bg-transparent";
-            });
-
-            document.getElementById(`list-tab-${tab}`).className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white shadow-xs";
+            document.querySelectorAll('[id^="list-tab-"]').forEach(b => b.className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400");
+            document.getElementById(`list-tab-${tab}`).className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white";
+            renderChecklists();
         }
 
         function renderChecklists() {
-            ['pre', 'carry', 'check'].forEach(type => {
-                const box = document.getElementById(`list-container-${type}`);
-                box.innerHTML = '';
-                const items = checklistData[type] || [];
-
-                items.forEach((item, index) => {
-                    const row = document.createElement('div');
-                    row.className = "flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0 text-xs";
-                    
-                    // 核心固定項目與一般項目的按鈕排他處理
-                    let actionBtnHtml = '';
-                    if (item.isDefault) {
-                        actionBtnHtml = `<span class="text-[10px] text-slate-300 bg-slate-100 px-1.5 py-0.5 rounded"><i class="fa-solid fa-lock mr-0.5"></i>固定</span>`;
-                    } else {
-                        actionBtnHtml = `<button onclick="deleteChecklistItem('${type}', ${index})" class="text-slate-300 hover:text-red-400 transition"><i class="fa-solid fa-trash-can"></i></button>`;
-                    }
-
-                    row.innerHTML = `
-                        <label class="flex items-center space-x-2 text-slate-600 cursor-pointer flex-1 select-none">
-                            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistStatus('${type}', ${index})" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-4 h-4">
-                            <span class="${item.checked ? 'line-through text-slate-300' : ''}">${item.text}</span>
+            const lists = JSON.parse(localStorage.getItem('checklist_data'));
+            ['pre', 'carry', 'check'].forEach(key => {
+                const container = document.getElementById(`list-container-${key}`);
+                container.innerHTML = "";
+                if(!lists[key] || lists[key].length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-300 py-2 text-center">空空如也</p>`;
+                    return;
+                }
+                lists[key].forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between py-1 border-b border-slate-50 text-xs";
+                    div.innerHTML = `
+                        <label class="flex items-center space-x-2.5 cursor-pointer flex-1 py-1">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistItem('${key}', ${idx})" class="rounded border-slate-200 text-emerald-400 focus:ring-emerald-300">
+                            <span class="${item.checked ? 'line-through text-slate-300 font-normal' : 'text-slate-600 font-medium'}">${item.text}</span>
                         </label>
-                        <div class="flex items-center">${actionBtnHtml}</div>
+                        <button onclick="deleteChecklistItem('${key}', ${idx})" class="text-slate-200 hover:text-red-400 ml-2 transition"><i class="fa-solid fa-xmark"></i></button>
                     `;
-                    box.appendChild(row);
+                    container.appendChild(div);
                 });
             });
+            renderMemo();
         }
 
-        function toggleChecklistStatus(type, index) {
-            checklistData[type][index].checked = !checklistData[type][index].checked;
-            saveChecklistToStorage();
+        function toggleChecklistItem(key, idx) {
+            const lists = JSON.parse(localStorage.getItem('checklist_data'));
+            lists[key][idx].checked = !lists[key][idx].checked;
+            localStorage.setItem('checklist_data', JSON.stringify(lists));
             renderChecklists();
         }
 
         function addCustomChecklistItem() {
-            const text = document.getElementById('custom-item-text').value.trim();
-            if (!text) return;
-
-            checklistData[activeListTab].push({ text, checked: false, isDefault: false });
-            saveChecklistToStorage();
+            const txt = document.getElementById('custom-item-text').value.trim();
+            if(!txt) return;
+            const lists = JSON.parse(localStorage.getItem('checklist_data'));
+            lists[activeListTab].push({ text: txt, checked: false, isDefault: false });
+            localStorage.setItem('checklist_data', JSON.stringify(lists));
+            document.getElementById('custom-item-text').value = "";
             renderChecklists();
-            document.getElementById('custom-item-text').value = '';
         }
 
-        // 刪除自訂項目需要確認
-        function deleteChecklistItem(type, index) {
-            if (confirm('確定要移除此項自訂行李/準備清單嗎？')) {
-                checklistData[type].splice(index, 1);
-                saveChecklistToStorage();
-                renderChecklists();
+        function deleteChecklistItem(key, idx) {
+            const lists = JSON.parse(localStorage.getItem('checklist_data'));
+            lists[key].splice(idx, 1);
+            localStorage.setItem('checklist_data', JSON.stringify(lists));
+            renderChecklists();
+        }
+
+        function renderMemo() {
+            const m = localStorage.getItem('memo') || "";
+            document.getElementById('memo-input').value = m;
+            document.getElementById('memo-display-box').innerText = m || "目前無任何隨手小筆記 ✍️";
+        }
+        function saveMemo() {
+            const m = document.getElementById('memo-input').value;
+            localStorage.setItem('memo', m);
+            renderMemo();
+        }
+
+        // WALLET 記帳與債務抵銷功能
+        function initWalletSelectors() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const payerSelect = document.getElementById('expense-payer');
+            const box = document.getElementById('expense-sharers-box');
+            
+            payerSelect.innerHTML = "";
+            box.innerHTML = "";
+
+            users.forEach(u => {
+                // 渲染代墊人下拉選單
+                const opt = document.createElement('option');
+                opt.value = u.name;
+                opt.innerText = u.name;
+                payerSelect.appendChild(opt);
+
+                // 渲染分攤人多選核取方塊
+                const label = document.createElement('label');
+                label.className = "flex items-center space-x-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-slate-100 shadow-2xs";
+                label.innerHTML = `
+                    <input type="checkbox" value="${u.name}" checked class="rounded border-slate-200 text-emerald-500 focus:ring-emerald-400">
+                    <span class="font-bold text-slate-600">${u.name}</span>
+                `;
+                box.appendChild(label);
+            });
+        }
+
+        function switchWalletMode(mode) {
+            walletMode = mode;
+            if(mode === 'group') {
+                document.getElementById('group-fields').classList.remove('hidden');
+                document.getElementById('wallet-mode-group').className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-bold bg-white text-emerald-600 shadow-xs";
+                document.getElementById('wallet-mode-personal').className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
+            } else {
+                document.getElementById('group-fields').classList.add('hidden');
+                document.getElementById('wallet-mode-group').className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
+                document.getElementById('wallet-mode-personal').className = "w-1/2 py-1.5 rounded-lg text-center text-xs font-bold bg-white text-emerald-600 shadow-xs";
             }
         }
 
-        // 備忘錄
-        function saveMemo() {
-            const text = document.getElementById('memo-input').value;
-            localStorage.setItem('trip_memo_v2', text);
-            loadMemo();
+        function calcExchange() {
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0;
+            const jpy = parseFloat(document.getElementById('calc-jpy').innerText.replace('¥ ', '')) || 0;
+            document.getElementById('calc-twd').innerText = 'NT$ ' + Math.round(jpy * rate).toLocaleString();
         }
 
-        function loadMemo() {
-            const saved = localStorage.getItem('trip_memo_v2') || "";
-            document.getElementById('memo-input').value = saved;
+        function executeCalc() {
+            const expr = document.getElementById('calc-expr').value.trim();
+            if(!expr) return;
+            try {
+                // 安全地解析基礎算式 (如 1200+850)
+                const sanitized = expr.replace(/[^0-9+\-*/().]/g, '');
+                const res = Function(`"use strict"; return (${sanitized})`)();
+                if(isNaN(res) || !isFinite(res)) throw new Error();
+                
+                document.getElementById('calc-jpy').innerText = '¥ ' + Math.round(res);
+                document.getElementById('expense-amount').value = Math.round(res);
+                calcExchange();
+            } catch(e) {
+                alert('算式輸入錯誤，例如：1200+850');
+            }
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImgBase64 = event.target.result;
+                    document.getElementById('img-preview').src = uploadedImgBase64;
+                    document.getElementById('img-preview-box').classList.remove('hidden');
+                    document.getElementById('img-status').innerText = "已成功加入收據相片";
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function addExpense() {
+            const item = document.getElementById('expense-item').value.trim();
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            if(!item || isNaN(amount) || amount <= 0) return alert('請完整填寫消費品項與正確日幣金額');
+
+            const curUser = JSON.parse(localStorage.getItem('current_user')) || { name: "我" };
+            const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+            let expObj = {
+                id: 'exp_' + Date.now(),
+                type: walletMode,
+                item: item,
+                amount: amount,
+                image: uploadedImgBase64
+            };
+
+            if(walletMode === 'group') {
+                const payer = document.getElementById('expense-payer').value;
+                const sharers = [];
+                document.querySelectorAll('#expense-sharers-box input[type="checkbox"]:checked').forEach(cb => {
+                    sharers.push(cb.value);
+                });
+                if(sharers.length === 0) return alert('群組分帳至少必須選取一位分攤成員！');
+                
+                expObj.payer = payer;
+                expObj.sharers = sharers;
+            } else {
+                // 私帳
+                expObj.payer = curUser.name;
+                expObj.sharers = [curUser.name];
+            }
+
+            expenses.push(expObj);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+
+            // 清空輸入框
+            document.getElementById('expense-item').value = "";
+            document.getElementById('expense-amount').value = "";
+            document.getElementById('calc-expr').value = "";
+            document.getElementById('calc-jpy').innerText = "¥ 0";
+            document.getElementById('calc-twd').innerText = "NT$ 0";
+            document.getElementById('img-preview-box').className = "hidden";
+            document.getElementById('img-status').innerText = "未選取照片";
+            uploadedImgBase64 = "";
+
+            renderExpenses();
+        }
+
+        function deleteExpense(id) {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            expenses = expenses.filter(e => e.id !== id);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            renderExpenses();
+        }
+
+        function clearExpenses() {
+            if(confirm('確定要清空所有的記帳與分帳歷史明細嗎？')) {
+                localStorage.setItem('expenses', JSON.stringify([]));
+                renderExpenses();
+            }
+        }
+
+        // ⭐ 核心演算法：計算多方相抵與簡化金流交易建議 ⭐
+        function renderExpenses() {
+            const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
+            const listContainer = document.getElementById('expense-list');
             
-            const display = document.getElementById('memo-display-box');
-            if(saved.trim()) {
-                display.innerText = saved;
-                // 簡易超連結正則擷取
-                const urlRegex = /(https?:\/\/[^\s]+)/g;
-                const links = saved.match(urlRegex);
-                const linkBox = document.getElementById('memo-links-container');
-                linkBox.innerHTML = '';
-                if(links) {
-                    links.forEach(url => {
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.target = "_blank";
-                        a.className = "text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-1 rounded-md max-w-xs truncate block";
-                        a.innerHTML = `<i class="fa-solid fa-link mr-1"></i> ${url}`;
-                        linkBox.appendChild(a);
+            listContainer.innerHTML = "";
+            let totalJPY = 0;
+
+            // 1. 初始化每個人的收支權益對象紀錄結構
+            // 淨額 = 幫別人代墊的錢(應收) - 自己該出卻被代墊的錢(應付)
+            let balances = {};
+            users.forEach(u => { balances[u.name] = 0; });
+
+            // 2. 渲染明細列表與基本統計
+            expenses.forEach(e => {
+                totalJPY += e.amount;
+                const isGroup = e.type === 'group';
+
+                // 計算每筆群組分帳各成員的債務金額
+                if (isGroup && balances[e.payer] !== undefined) {
+                    balances[e.payer] += e.amount; // 代墊人先拿到了全額應收款
+                    const perShare = e.amount / e.sharers.length;
+                    e.sharers.forEach(s => {
+                        if (balances[s] !== undefined) {
+                            balances[s] -= perShare; // 參與分攤者扣除其應承擔的費用
+                        }
                     });
                 }
-            } else {
-                display.innerText = "目前無備忘內容。";
-                document.getElementById('memo-links-container').innerHTML = '';
-            }
-        }
 
-        // 初始化拖曳排序 (Sortable.js)
-        function initSortable() {
-            const el = document.getElementById('day-schedule-container');
-            Sortable.create(el, {
-                ghostClass: 'sortable-ghost',
-                animation: 150,
-                onEnd: function (evt) {
-                    const items = tripData[activeDay];
-                    // 在陣列中將拖曳項目的索引重新排序
-                    const movedItem = items.splice(evt.oldIndex, 1)[0];
-                    items.splice(evt.newIndex, 0, movedItem);
-                    saveTripToStorage();
-                },
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex justify-between items-center text-xs group relative";
+                
+                let detailTxt = isGroup 
+                    ? `<span class="text-[10px] text-emerald-600 block font-semibold">[群組] 由 ${e.payer} 墊付 / ${e.sharers.join(',')} 分攤</span>` 
+                    : `<span class="text-[10px] text-slate-400 block font-semibold">[個人私帳]</span>`;
+
+                div.innerHTML = `
+                    <div class="space-y-0.5">
+                        <p class="font-bold text-slate-700">${e.item}</p>
+                        ${detailTxt}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        ${e.image ? `<img src="${e.image}" onclick="alert('檢視收據照片')" class="w-7 h-7 object-cover rounded border border-slate-200 cursor-zoom-in">` : ''}
+                        <span class="font-bold text-slate-600">¥${e.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense('${e.id}')" class="text-slate-300 hover:text-red-400 text-[11px] opacity-0 group-hover:opacity-100 transition pl-1"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+                listContainer.appendChild(div);
             });
+
+            // 更新雙幣總帳
+            document.getElementById('expense-total-all').innerText = `¥ ${totalJPY.toLocaleString()} (NT$ ${Math.round(totalJPY * rate).toLocaleString()})`;
+
+            // 3. 渲染「結算面板看板」
+            const dash = document.getElementById('netting-dashboard');
+            dash.innerHTML = "";
+            users.forEach(u => {
+                const net = balances[u.name] || 0;
+                let statusBadge = "";
+                if (net > 0.1) {
+                    statusBadge = `<span class="text-emerald-400 font-bold">🌟 應收 ¥${Math.round(net).toLocaleString()}</span>`;
+                } else if (net < -0.1) {
+                    statusBadge = `<span class="text-rose-400 font-bold">💸 應付 ¥${Math.round(Math.abs(net)).toLocaleString()}</span>`;
+                } else {
+                    statusBadge = `<span class="text-slate-400 font-medium">✨ 已完全抵銷</span>`;
+                }
+
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <img src="${u.avatar}" class="w-5 h-5 rounded-full bg-slate-800">
+                        <span class="font-bold text-slate-200">${u.name}</span>
+                    </div>
+                    <div class="text-[11px]">${statusBadge}</div>
+                `;
+                dash.appendChild(div);
+            });
+
+            // 4. 執行多方清算演算法（圖論金流最佳化）並生成文字
+            const suggestionsContainer = document.getElementById('netting-suggestions');
+            suggestionsContainer.innerHTML = "";
+
+            // 將所有人分為「淨欠錢群組」與「淨收錢群組」
+            let debtors = [];
+            let creditors = [];
+            for (let name in balances) {
+                let val = balances[name];
+                if (val < -0.1) debtors.push({ name: name, amt: Math.abs(val) });
+                else if (val > 0.1) creditors.push({ name: name, amt: val });
+            }
+
+            let adviceList = [];
+            let d_idx = 0, c_idx = 0;
+
+            // 雙指針媒合對沖
+            while (d_idx < debtors.length && c_idx < creditors.length) {
+                let d = debtors[d_idx];
+                let c = creditors[c_idx];
+                let transAmt = Math.min(d.amt, c.amt);
+
+                adviceList.push(`👉 <b>【${d.name}】</b> 直接支付 <b>¥${Math.round(transAmt).toLocaleString()}</b> 給 <b>【${c.name}】</b>`);
+
+                d.amt -= transAmt;
+                c.amt -= transAmt;
+
+                if (d.amt < 0.1) d_idx++;
+                if (c.amt < 0.1) c_idx++;
+            }
+
+            if (adviceList.length === 0) {
+                suggestionsContainer.innerHTML = `<p class="text-slate-400 text-[11px] text-center italic py-1">目前帳目平衡，無須任何人轉帳轉手喔！ 🕊️</p>`;
+            } else {
+                adviceList.forEach(adv => {
+                    const p = document.createElement('p');
+                    p.className = "bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5 leading-relaxed";
+                    p.innerHTML = adv;
+                    suggestionsContainer.appendChild(p);
+                });
+            }
         }
     </script>
 </body>
