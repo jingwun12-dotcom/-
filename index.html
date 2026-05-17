@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
         body {
@@ -22,6 +23,11 @@
         .no-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
+        }
+        /* 拖曳時被選中項目的樣式 */
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #f0fdf4 !important;
         }
     </style>
 </head>
@@ -78,7 +84,10 @@
                 <button onclick="switchDay(6)" id="btn-d6" class="day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200">D6</button>
             </div>
 
-            <div id="day-schedule-container" class="space-y-4 relative border-l-2 border-dashed border-emerald-200 ml-3 pl-5 py-2"></div>
+            <div class="relative ml-3 pl-5 py-2">
+                <div class="absolute left-0 top-0 bottom-0 w-0.5 border-l-2 border-dashed border-emerald-200"></div>
+                <ul id="day-schedule-container" class="space-y-4"></ul>
+            </div>
 
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                 <h3 class="font-bold text-sm text-slate-700 flex items-center"><i class="fa-solid fa-plus text-emerald-500 mr-1.5"></i>新增/修改此天行程</h3>
@@ -274,7 +283,7 @@
     </nav>
 
     <script>
-        // 預設核心內建行程資料 (若使用者 LocalStorage 空白時使用)
+        // 預設核心內建行程資料
         const defaultTripData = {
             1: [
                 { time: "06:30", title: "桃園國際機場 第一航廈", desc: "準備辦理行李托運與出境通關手續。", isImportant: true },
@@ -322,54 +331,52 @@
 
         // 預設景點誌
         const defaultGuideData = [
-            { tag: "Osaka // 歷史浪漫", title: "大阪城天守閣", desc: "作為大阪的至高地標，大阪城由戰國梟雄豐臣秀吉於1583年開始建造，歷經多次戰火摧毀。現存的天守閣雖為昭和年間由民間募資重建，但其白漆大理石牆面與奢華的黃金雕刻裝飾依舊雄偉。天守閣頂端巨大的「金鯱」獸頭魚身像，相傳能在發生火災時噴水滅火，是極具象徵意義的守護神。" },
-            { tag: "Kyoto // 千年信仰", title: "伏見稻荷大社", desc: "全日本3萬座稻荷神社的總本宮，供奉保佑商業繁盛、五穀豐收的狐狸使者。綿延不絕的「千本鳥居」皆由信徒或企業捐贈，因經年累月的風雨呈現深邃的朱紅色，漫步其中彷彿與神域相連，是京都不可錯過的神秘廊道。" },
-            { tag: "Kyoto // 三大名勝", title: "音羽山清水寺", desc: "清水寺位於JR「京都站」東北側，正式名稱為「音羽山 清水寺」，坐落於京都市與琵琶湖（滋賀縣）之間的音羽山半山腰中，是一座極具歷史價值的古老寺廟，已被登錄為聯合國教科文組織世界文化遺產。境內有國寶「本堂」，以及國家重要文化財產「仁王門」、「西門」、「鐘樓」和「三重塔」等30多座廟堂及石碑。" },
-            { tag: "Osaka // 購物商圈", title: "心齋橋", desc: "位於大阪的南區，也就是常說的難波地區，與「道頓堀」一樣人氣旺盛。這裡擁有眾多商店街、各種商店和商業設施，是逛街購物的理想場所。特別是時裝店和雜貨店非常多，各種品牌店鋪鱗次櫛比。可以在大阪年輕人流行文化的發源地「美國村」、大阪中心地區南北長約580公尺的商店街「心齋橋筋商店街」，以及奢華品牌路面店雲集的「御堂筋」等功能豐富的區段遊逛。" },
-            { tag: "Nara // 神之使者", title: "奈良公園 & 東大寺", desc: "奈良公園內棲息著超過1,200頭野生梅花鹿，在春日大社的古老神話中，鹿被視為神明的座騎與使者（神鹿），因而受到長年保護。而在公園深處的「東大寺」，由聖武天皇於西元728年傾全國之力建造。其核心建築「大佛殿」是目前全世界最大的木造建築之一，殿內供奉著高達 15 公尺的盧舍那大佛。大佛右後方的巨型木柱底下有一個「大佛鼻孔洞」，相傳只要能順利鑽過，就能獲得一整年的福報與平安。", tip: "🦌 <b>餵鹿秘訣：</b>購買鹿仙貝時儘量保持低調，一旦被包圍不要驚慌，手舉高攤開表示「沒有了（ナイ）」，小鹿通常就會聽懂並散去。" },
-            { tag: "Osaka // 浪速地標", title: "新世界通天閣", desc: "初代目通天閣建於1912年，外觀融合了巴黎鐵塔與凱旋門的設計，在當時高居亞洲第一。現在看到的第二代通天閣則是由知名建築師內藤多仲（也是東京鐵塔設計者）規劃。塔頂設有祈求幸運的「比利肯神像（Billiken）」，據說撫摸祂的腳底板就能心想事成。近年更增設了高低差 27 公尺的「TOWER SLIDER」巨型迴旋溜滑梯，從3樓展望台一口氣滑到地下一樓只需10秒，是新世界地區最刺激的全新玩法！", tip: "💡 <b>小提示：</b>通天閣周邊的「新世界」充滿懷舊昭和感，這裡的炸串（串カツ）非常有名，記得遵守店家「禁止二次沾醬」的傳統規矩。" },
-            { tag: "Kobe // 千萬夜景", title: "神戶摩耶山 掬星台", desc: "摩耶山海拔高 702 公尺，其山頂展望台命名為「掬星台」，意思是浪漫得「可以用手舀起滿天繁星」。這裡名列「日本三大夜景」之一，能眺望從神戶市區、大阪灣、一路綿延至大阪平原的開闊全景。動用百萬顆閃爍燈火交織而成的巨幅畫卷，因其壯麗程度與消耗電量，被賦予了「千萬美金夜景」的美譽。山頂的地板更特別鋪設了螢光石步道（閃亮小徑），夜間散步時腳下會亮起夢幻的幽藍星光。", tip: "❄️ <b>防寒提醒：</b>即使是6月夏季前夕，摩耶山頂的海拔高加上強風，入夜後氣溫會顯著驟降、體感偏冷，上山賞夜景時請務必攜帶防風外套。" },
-            { tag: "Kobe // 夢幻港景", title: "神戶港塔", desc: "神戶港塔是位在神戶最精華且熱鬧的港灣區域，紅色線條編織的大型建築，充滿藝術感。太陽下山時，塔身還會亮起7000顆LED燈，玩神戶港塔，可以登上360度的觀景台，飽覽神戶唯美的山城美景和港邊水色，還能坐在神戶港塔裡的旋轉咖啡餐廳享受美食。" },
-            { tag: "Himeji // 三大名城", title: "姬路城", desc: "姬路城位於兵庫縣姬路市，是世界上最著名的城堡之一，同時也被譽為木造建築的最高傑作。與熊本縣的「熊本城」、長野縣的「松本城」合稱為『日本三大名城』。姬路城的天守等其他建築保存得相當完好，作為最能展現日本獨特的防禦建築技術的城堡典範而深受世界矚目。由於其所具有的歷史及藝術價值，姬路城和「法隆寺」於1993年一同被登錄為世界文化遺產，成為日本首次列入世界文化遺產名錄的歷史建築。" },
-            { tag: "Kobe // 異國風情", title: "神戶北野異人館", desc: "位在兵庫縣神戶的「神戶北野異人館」是一處洋溢著異國情調、人氣極高的觀光景點。街上林立著明治和大正時期建造的異人館（外國人舊居），籠罩著一股懷舊氛圍。館內的古董家具和色彩鮮豔的彩繪玻璃等也充滿了藝術魅力。" }
+            { tag: "Osaka // 歷史浪漫", title: "大阪城天守閣", desc: "作為大阪的至高地 Landmark..." },
+            { tag: "Kyoto // 千年信仰", title: "伏見稻荷大社", desc: "全日本3萬座稻荷神社的總本宮..." },
+            { tag: "Kyoto // 三大名勝", title: "音羽山清水寺", desc: "清水寺位於JR「京都站」東北側..." },
+            { tag: "Osaka // 購物商圈", title: "心齋橋", desc: "位於大阪的南區，也就是常說的難波地區..." },
+            { tag: "Nara // 神之使者", title: "奈良公園 & 東大寺", desc: "奈良公園內棲息著超過1,200頭野生梅花鹿...", tip: "🦌 <b>餵鹿秘訣：</b>購買鹿仙貝時儘量保持低調..." },
+            { tag: "Osaka // 浪速地標", title: "新世界通天閣", desc: "初代目通天閣建於1912年，外觀融合了巴黎鐵塔與凱旋門...", tip: "💡 <b>小提示：</b>通天閣周邊的「新世界」充滿懷舊昭和感..." },
+            { tag: "Kobe // 千萬夜景", title: "神戶摩耶山 掬星台", desc: "摩耶山海拔高 702 公尺，其山頂展望台命名為「掬星台」...", tip: "❄️ <b>防寒提醒：</b>即使是6月夏季前夕，摩耶山頂的海拔高加上強風..." },
+            { tag: "Kobe // 夢幻港景", title: "神戶港塔", desc: "神戶港塔是位在神戶最精華且熱鬧的港灣區域..." },
+            { tag: "Himeji // 三大名城", title: "姬路城", desc: "姬路城位於兵庫縣姬路市，是世界上最著名的城堡之一..." },
+            { tag: "Kobe // 異國風情", title: "神戶北野異人館", desc: "位在兵庫縣神戶的「神戶北野異人館」是一處洋溢著異國情調..." }
         ];
 
-        // 預設打包清單
+        // 預設打包清單（加入 isDefault 標記用來限制刪除功能）
         const defaultChecklistData = {
             pre: [
-                { text: "線上預辦登機 (星宇航空會員可在登機前 48 小時提前報到)", checked: false },
-                { text: "入境前填妥 Visit Japan Web (完成後請截圖儲存 QR code)", checked: false },
-                { text: "投保旅遊平安險與不便險", checked: false },
-                { text: "購買並確認 E-sim 完成開卡設定準備", checked: false },
-                { text: "兌換日幣現鈔 & 手機綁定全支付 (可掃 PayPay 條碼)", checked: false }
+                { text: "線上預辦登機 (星宇航空會員可在登機前 48 小時提前報到)", checked: false, isDefault: true },
+                { text: "入境前填妥 Visit Japan Web (完成後請截圖儲存 QR code)", checked: false, isDefault: true },
+                { text: "投保旅遊平安險與不便險", checked: false, isDefault: true },
+                { text: "購買並確認 E-sim 完成開卡設定準備", checked: false, isDefault: true },
+                { text: "兌換日幣現鈔 & 手機綁定全支付 (可掃 PayPay 條碼)", checked: false, isDefault: true }
             ],
             carry: [
-                { text: "護照", checked: false }, { text: "證件", checked: false }, { text: "信用卡", checked: false }, 
-                { text: "日幣", checked: false }, { text: "台幣", checked: false }, { text: "耳機", checked: false }, 
-                { text: "手機", checked: false }, { text: "筆", checked: false }, { text: "輕便包包", checked: false }, 
-                { text: "水壺", checked: false }, { text: "行動電源", checked: false }, { text: "折疊傘", checked: false }, 
-                { text: "個人常備藥品", checked: false }
+                { text: "護照", checked: false, isDefault: true }, { text: "證件", checked: false, isDefault: true }, { text: "信用卡", checked: false, isDefault: true }, 
+                { text: "日幣", checked: false, isDefault: true }, { text: "台幣", checked: false, isDefault: true }, { text: "耳機", checked: false, isDefault: true }, 
+                { text: "手機", checked: false, isDefault: true }, { text: "筆", checked: false, isDefault: true }, { text: "輕便包包", checked: false, isDefault: true }, 
+                { text: "水壺", checked: false, isDefault: true }, { text: "行動電源", checked: false, isDefault: true }, { text: "折疊傘", checked: false, isDefault: true }, 
+                { text: "個人常備藥品", checked: false, isDefault: true }
             ],
             check: [
-                { text: "換洗衣物", checked: false }, { text: "外套", checked: false }, { text: "日常保養品、化妝品", checked: false }, 
-                { text: "眼鏡/隱形眼鏡", checked: false }, { text: "牙刷牙膏牙線", checked: false }, { text: "購物袋", checked: false }, 
-                { text: "口罩", checked: false }, { text: "手機充電線器", checked: false }, { text: "鞋子", checked: false }, 
-                { text: "梳子", checked: false }, { text: "洗卸用品", checked: false }, { text: "衛生紙、衛生棉", checked: false }, 
-                { text: "防曬裝備", checked: false }, { text: "毛巾", checked: false }
+                { text: "換洗衣物", checked: false, isDefault: true }, { text: "外套", checked: false, isDefault: true }, { text: "日常保養品、化妝品", checked: false, isDefault: true }, 
+                { text: "眼鏡/隱形眼鏡", checked: false, isDefault: true }, { text: "牙刷牙膏牙線", checked: false, isDefault: true }, { text: "購物袋", checked: false, isDefault: true }, 
+                { text: "口罩", checked: false, isDefault: true }, { text: "手機充電線器", checked: false, isDefault: true }, { text: "鞋子", checked: false, isDefault: true }, 
+                { text: "梳子", checked: false, isDefault: true }, { text: "洗卸用品", checked: false, isDefault: true }, { text: "衛生紙、衛生棉", checked: false, isDefault: true }, 
+                { text: "防曬裝備", checked: false, isDefault: true }, { text: "毛巾", checked: false, isDefault: true }
             ]
         };
 
-        // 資料狀態變數
         let tripData = {};
         let guideData = [];
         let checklistData = {};
         let activeDay = 1;
         let activeListTab = 'pre';
         let currentCompressedImgBase64 = "";
+        let sortableInstance = null; // 存放拖曳實例
 
-        // 初始化載入
         window.onload = function() {
-            // 讀取或初始化行程表
             if (localStorage.getItem('tripData_v2')) {
                 tripData = JSON.parse(localStorage.getItem('tripData_v2'));
             } else {
@@ -377,7 +384,6 @@
                 saveTripToStorage();
             }
 
-            // 讀取或初始化景點誌
             if (localStorage.getItem('guideData_v2')) {
                 guideData = JSON.parse(localStorage.getItem('guideData_v2'));
             } else {
@@ -385,7 +391,6 @@
                 saveGuideToStorage();
             }
 
-            // 讀取或初始化清單
             if (localStorage.getItem('checklistData_v2')) {
                 checklistData = JSON.parse(localStorage.getItem('checklistData_v2'));
             } else {
@@ -398,365 +403,367 @@
             renderChecklists();
             loadMemo();
             loadExpenses();
+            initSortable(); // 啟動拖曳監聽
         };
 
-        // 輔助儲存函數
         function saveTripToStorage() { localStorage.setItem('tripData_v2', JSON.stringify(tripData)); }
         function saveGuideToStorage() { localStorage.setItem('guideData_v2', JSON.stringify(guideData)); }
         function saveChecklistToStorage() { localStorage.setItem('checklistData_v2', JSON.stringify(checklistData)); }
 
-        // 頁籤切換邏輯
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`sec-${tabName}`).classList.remove('hidden');
-
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-emerald-500');
                 btn.classList.add('text-slate-400');
             });
             document.getElementById(`nav-${tabName}`).classList.remove('text-slate-400');
             document.getElementById(`nav-${tabName}`).classList.add('text-emerald-500');
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 行程天數切換與渲染
+        // 核心功能 1：渲染行程，內嵌 Google Maps 連結與直接點選編輯屬性 (contenteditable)
         function switchDay(dayNum) {
             activeDay = dayNum;
             document.querySelectorAll('.day-btn').forEach(btn => {
-                btn.classList.remove('bg-gradient-to-br', 'from-emerald-400', 'to-blue-400', 'text-white', 'font-bold');
-                btn.classList.add('bg-white', 'text-slate-500', 'border', 'border-slate-100', 'font-medium');
+                btn.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200";
             });
-            const activeBtn = document.getElementById(`btn-d${dayNum}`);
-            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border', 'border-slate-100', 'font-medium');
-            activeBtn.classList.add('bg-gradient-to-br', 'from-emerald-400', 'to-blue-400', 'text-white', 'font-bold');
+            document.getElementById(`btn-d${dayNum}`).className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-bold text-sm shadow-sm transition-all duration-200";
             
-            renderSchedule(dayNum);
+            renderSchedule();
         }
 
-        function renderSchedule(dayNum) {
+        function renderSchedule() {
             const container = document.getElementById('day-schedule-container');
-            container.innerHTML = "";
-            
-            const items = tripData[dayNum] || [];
-            
-            if(items.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 py-4">今天目前還沒有排任何行程喔！</p>`;
-                return;
-            }
+            container.innerHTML = '';
 
-            items.forEach((item, index) => {
-                const borderClass = item.isImportant ? 'border-amber-200 bg-amber-50/40 shadow-xs' : 'border-slate-100 bg-white/70';
-                const tagClass = item.isImportant ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-500';
-                
-                container.innerHTML += `
-                    <div class="relative ${borderClass} border p-3.5 rounded-2xl transition group">
-                        <div class="absolute -left-[27px] top-[18px] w-2.5 h-2.5 rounded-full border-2 border-white bg-emerald-400 shadow-xs"></div>
-                        <div class="flex justify-between items-start">
-                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${tagClass}">${item.time}</span>
-                            <button onclick="deletePlan(${index})" class="text-[11px] text-slate-300 hover:text-red-400 transition"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                        <h4 class="font-bold text-[13px] text-slate-700 mt-2">${item.title}</h4>
-                        <p class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</p>
+            const list = tripData[activeDay] || [];
+            list.forEach((item, index) => {
+                const li = document.createElement('li');
+                // 加上特定樣式以利手機端進行精確整行拖曳
+                li.className = `bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-start space-x-3 relative group transition-all duration-150 ${item.isImportant ? 'ring-2 ring-emerald-400 shadow-md bg-emerald-50/10' : ''}`;
+                li.setAttribute('data-index', index);
+
+                // 清理標題字元以便進行乾淨的地圖關鍵字搜尋
+                const mapQuery = encodeURIComponent(item.title.replace(/[★🏃🛍️🔍🏯⛩️🍁🍽️🦖🏨✈️📍]/g, '').trim());
+                const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+                li.innerHTML = `
+                    <div class="drag-handle cursor-move pt-0.5 text-slate-300 hover:text-slate-500 px-1">
+                        <i class="fa-solid fa-bars text-sm"></i>
                     </div>
+                    <div class="flex-1 space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span contenteditable="true" onblur="updateLivePlan(${index}, 'time', this.innerText)" class="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 focus:bg-yellow-50 focus:outline-none">${item.time}</span>
+                            <span class="font-bold text-sm text-slate-700 flex items-center gap-1">
+                                <span contenteditable="true" onblur="updateLivePlan(${index}, 'title', this.innerText)" class="focus:bg-yellow-50 focus:outline-none">${item.title}</span>
+                                <a href="${mapLink}" target="_blank" class="text-blue-500 hover:text-blue-700 text-xs ml-1" title="打開地圖"><i class="fa-solid fa-map-location-dot"></i></a>
+                            </span>
+                        </div>
+                        <p contenteditable="true" onblur="updateLivePlan(${index}, 'desc', this.innerText)" class="text-xs text-slate-400 leading-relaxed focus:bg-yellow-50 focus:outline-none">${item.desc}</p>
+                    </div>
+                    <button onclick="confirmDeletePlan(${index})" class="text-slate-300 hover:text-red-500 transition-colors pt-0.5">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
                 `;
+                container.appendChild(li);
             });
         }
 
-        // 新增行程功能
+        // 即時失去焦點 (Blur) 時儲存更新的行程文字
+        function updateLivePlan(index, field, value) {
+            if (tripData[activeDay] && tripData[activeDay][index]) {
+                tripData[activeDay][index][field] = value.trim();
+                saveTripToStorage();
+            }
+        }
+
+        // 核心功能 3：行程上下拖曳排版監聽 (SortableJS)
+        function initSortable() {
+            const el = document.getElementById('day-schedule-container');
+            sortableInstance = new Sortable(el, {
+                handle: '.drag-handle', // 限制只能點擊三條線才能拖移，避免打字衝突
+                animation: 200,
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    const list = tripData[activeDay];
+                    // 根據拖曳結果重新洗牌陣列
+                    const removed = list.splice(evt.oldIndex, 1)[0];
+                    list.splice(evt.newIndex, 0, removed);
+                    
+                    saveTripToStorage();
+                    renderSchedule(); // 重新整理索引序號
+                },
+            });
+        }
+
+        // 核心功能 2 延伸：確定刪除該行程對話視窗
+        function confirmDeletePlan(index) {
+            if (confirm("確定刪除該行程？")) {
+                tripData[activeDay].splice(index, 1);
+                saveTripToStorage();
+                renderSchedule();
+            }
+        }
+
         function addCustomPlan() {
-            const time = document.getElementById('plan-time').value.trim();
-            const title = document.getElementById('plan-title').value.trim();
-            const desc = document.getElementById('plan-desc').value.trim();
+            const time = document.getElementById('plan-time').value || "00:00";
+            const title = document.getElementById('plan-title').value;
+            const desc = document.getElementById('plan-desc').value || "";
             const isImportant = document.getElementById('plan-important').checked;
 
-            if(!time || !title) {
-                alert("請填寫時間與行程名稱！");
-                return;
-            }
+            if (!title) { alert("請輸入活動或景點名稱！"); return; }
 
-            if(!tripData[activeDay]) tripData[activeDay] = [];
-            
+            if (!tripData[activeDay]) tripData[activeDay] = [];
             tripData[activeDay].push({ time, title, desc, isImportant });
-            // 按時間排序
-            tripData[activeDay].sort((a,b) => a.time.localeCompare(b.time));
             
-            saveTripToStorage();
-            renderSchedule(activeDay);
+            // 排序時間
+            tripData[activeDay].sort((a,b) => a.time.localeCompare(b.time));
 
-            // 清空輸入框
-            document.getElementById('plan-time').value = "";
-            document.getElementById('plan-title').value = "";
-            document.getElementById('plan-desc').value = "";
+            saveTripToStorage();
+            renderSchedule();
+
+            document.getElementById('plan-time').value = '';
+            document.getElementById('plan-title').value = '';
+            document.getElementById('plan-desc').value = '';
             document.getElementById('plan-important').checked = false;
         }
 
-        function deletePlan(index) {
-            if(confirm("確定要刪除這項行程嗎？")) {
-                tripData[activeDay].splice(index, 1);
-                saveTripToStorage();
-                renderSchedule(activeDay);
-            }
-        }
-
-        // 渲染景點深度誌
+        // 景點誌控制
         function renderGuide() {
             const container = document.getElementById('guide-container');
-            container.innerHTML = "";
-
-            guideData.forEach((item, index) => {
-                let tipHtml = item.tip ? `
-                    <div class="bg-emerald-50/50 p-2 rounded-xl text-[11px] text-emerald-600 border border-emerald-100/50 mt-2">
-                        ${item.tip}
+            container.innerHTML = '';
+            guideData.forEach((g, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-2 relative";
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="text-[9px] font-bold tracking-wider uppercase text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md">${g.tag}</span>
+                        <button onclick="deleteGuide(${index})" class="text-slate-300 hover:text-red-400 text-xs"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                ` : '';
-
-                container.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3 relative group">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded">${item.tag}</span>
-                            <button onclick="deleteGuide(${index})" class="text-xs text-slate-300 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                        <h3 class="text-base font-bold text-slate-700 flex items-center"><i class="fa-solid fa-map-location text-emerald-500 mr-2"></i>${item.title}</h3>
-                        <p class="text-xs text-slate-500 leading-relaxed text-justify">${item.desc}</p>
-                        ${tipHtml}
-                    </div>
+                    <h3 class="font-bold text-sm text-slate-700">${g.title}</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">${g.desc}</p>
+                    ${g.tip ? `<div class="bg-amber-50/60 border border-amber-100/50 p-2.5 rounded-xl text-[11px] text-amber-700 leading-normal">${g.tip}</div>` : ''}
                 `;
+                container.appendChild(div);
             });
         }
 
         function addCustomGuide() {
-            const tag = document.getElementById('guide-tag').value.trim() || "自訂分類";
-            const title = document.getElementById('guide-title').value.trim();
-            const desc = document.getElementById('guide-desc').value.trim();
-            const tip = document.getElementById('guide-tip').value.trim();
+            const tag = document.getElementById('guide-tag').value || "自訂分類";
+            const title = document.getElementById('guide-title').value;
+            const desc = document.getElementById('guide-desc').value;
+            const tip = document.getElementById('guide-tip').value;
 
-            if(!title || !desc) {
-                alert("請至少填入景點名稱與說明內容！");
-                return;
-            }
-
+            if (!title || !desc) { alert("請填寫景點名稱與說明！"); return; }
             guideData.push({ tag, title, desc, tip });
             saveGuideToStorage();
             renderGuide();
 
-            document.getElementById('guide-tag').value = "";
-            document.getElementById('guide-title').value = "";
-            document.getElementById('guide-desc').value = "";
-            document.getElementById('guide-tip').value = "";
+            document.getElementById('guide-tag').value = '';
+            document.getElementById('guide-title').value = '';
+            document.getElementById('guide-desc').value = '';
+            document.getElementById('guide-tip').value = '';
         }
 
         function deleteGuide(index) {
-            if(confirm("確定要刪除這篇景點筆記嗎？")) {
+            if (confirm("確定刪除此景點筆記嗎？")) {
                 guideData.splice(index, 1);
                 saveGuideToStorage();
                 renderGuide();
             }
         }
 
-        // 清單分頁切換
-        function switchListTab(tabKey) {
-            activeListTab = tabKey;
+        // 核心功能 4：清單渲染控制（限定給定之預設配置禁止渲染刪除鍵）
+        function switchListTab(tab) {
+            activeListTab = tab;
             document.querySelectorAll('.list-sub-panel').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`list-container-${tabKey}`).classList.remove('hidden');
+            document.getElementById(`list-container-${tab}`).classList.remove('hidden');
 
-            document.querySelectorAll('[id^="list-tab-"]').forEach(btn => {
-                btn.classList.remove('bg-emerald-400', 'text-white', 'font-bold');
-                btn.classList.add('text-slate-400', 'font-semibold');
+            document.querySelectorAll('#sec-lists button[onclick^="switchListTab"]').forEach(btn => {
+                btn.className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
             });
-            document.getElementById(`list-tab-${tabKey}`).classList.remove('text-slate-400', 'font-semibold');
-            document.getElementById(`list-tab-${tabKey}`).classList.add('bg-emerald-400', 'text-white', 'font-bold');
+            document.getElementById(`list-tab-${tab}`).className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white";
         }
 
-        // 渲染所有清單
         function renderChecklists() {
-            ['pre', 'carry', 'check'].forEach(key => {
-                const container = document.getElementById(`list-container-${key}`);
-                container.innerHTML = "";
-                
-                const currentList = checklistData[key] || [];
+            ['pre', 'carry', 'check'].forEach(tab => {
+                const container = document.getElementById(`list-container-${tab}`);
+                container.innerHTML = '';
+                const items = checklistData[tab] || [];
 
-                if(currentList.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">這個清單目前是空的</p>`;
+                if (items.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-300 text-center py-2">目前尚無清單項目</p>`;
                     return;
                 }
 
-                currentList.forEach((item, index) => {
-                    const isChecked = item.checked ? 'checked' : '';
-                    const textStyle = item.checked ? 'line-through text-slate-300' : 'text-slate-600';
+                items.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0 text-xs";
                     
-                    container.innerHTML += `
-                        <div class="flex items-center justify-between border-b border-slate-50 pb-1.5 last:border-0 group">
-                            <label class="flex items-center space-x-2.5 cursor-pointer flex-1">
-                                <input type="checkbox" ${isChecked} onclick="toggleCheckItem('${key}', ${index})" class="rounded border-slate-300 text-emerald-400 focus:ring-emerald-300">
-                                <span class="text-xs font-medium ${textStyle}">${item.text}</span>
-                            </label>
-                            <button onclick="deleteCheckItem('${key}', ${index})" class="text-[10px] text-slate-300 hover:text-red-400 pr-1"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
+                    div.innerHTML = `
+                        <label class="flex items-center space-x-2.5 flex-1 cursor-pointer select-none">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklist('${tab}', ${index})" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 h-4 w-4">
+                            <span class="${item.checked ? 'line-through text-slate-300' : 'text-slate-600 font-medium'}">${item.text}</span>
+                        </label>
+                        ${item.isDefault ? '' : `
+                            <button onclick="deleteChecklistItem('${tab}', ${index})" class="text-slate-300 hover:text-red-500 pl-2">
+                                <i class="fa-solid fa-trash-can text-[11px]"></i>
+                            </button>
+                        `}
                     `;
+                    container.appendChild(div);
                 });
             });
         }
 
-        function toggleCheckItem(key, index) {
-            checklistData[key][index].checked = !checklistData[key][index].checked;
+        function toggleChecklist(tab, index) {
+            checklistData[tab][index].checked = !checklistData[tab][index].checked;
             saveChecklistToStorage();
             renderChecklists();
         }
 
         function addCustomChecklistItem() {
-            const inputEl = document.getElementById('custom-item-text');
-            const text = inputEl.value.trim();
-            if(!text) return;
-
-            if(!checklistData[activeListTab]) checklistData[activeListTab] = [];
-            checklistData[activeListTab].push({ text: text, checked: false });
+            const txt = document.getElementById('custom-item-text').value.trim();
+            if(!txt) return;
             
+            // 自訂新加入的項目不帶 isDefault，故允許手動清除
+            checklistData[activeListTab].push({ text: txt, checked: false, isDefault: false });
             saveChecklistToStorage();
             renderChecklists();
-            inputEl.value = "";
+            document.getElementById('custom-item-text').value = '';
         }
 
-        function deleteCheckItem(key, index) {
-            checklistData[key].splice(index, 1);
+        function deleteChecklistItem(tab, index) {
+            checklistData[tab].splice(index, 1);
             saveChecklistToStorage();
             renderChecklists();
         }
 
-        // ================= WALLET 記帳模組 =================
+        // 記帳與備忘錄常規邏輯
         function calcExchange() {
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-            const expr = document.getElementById('calc-expr').value.trim();
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0;
+            const expr = document.getElementById('calc-expr').value;
             if(!expr) return;
             try {
-                const cleanedExpr = expr.replace(/[^0-9+\-*/().]/g, '');
-                const resultJpy = Math.round(eval(cleanedExpr));
-                if(!isNaN(resultJpy)) {
-                    document.getElementById('calc-jpy').innerText = `¥ ${resultJpy.toLocaleString()}`;
-                    document.getElementById('calc-twd').innerText = `NT$ ${Math.round(resultJpy * rate).toLocaleString()}`;
-                }
-            } catch(e) {}
+                const cleanExpr = expr.replace(/[^0-9+\-*/().]/g, '');
+                const jpySum = eval(cleanExpr);
+                if(isNaN(jpySum)) return;
+                document.getElementById('calc-jpy').innerText = `¥ ${Math.round(jpySum).toLocaleString()}`;
+                document.getElementById('calc-twd').innerText = `NT$ ${Math.round(jpySum * rate).toLocaleString()}`;
+            } catch(e){}
         }
-
         function executeCalc() {
             calcExchange();
-            const jpyText = document.getElementById('calc-jpy').innerText.replace(/[^\d]/g, '');
-            if(jpyText && jpyText !== "0") {
+            const jpyText = document.getElementById('calc-jpy').innerText.replace(/[¥\s,]/g, '');
+            if (jpyText && jpyText !== "0") {
                 document.getElementById('expense-amount').value = jpyText;
+                document.getElementById('expense-item').value = "換算機匯入消費";
             }
         }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('img-status').innerText = "處理中...";
+            document.getElementById('img-status').innerText = "讀取壓縮中...";
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function(event) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const max_size = 300;
                     let width = img.width;
                     let height = img.height;
-                    if (width > height && width > max_size) { height *= max_size / width; width = max_size; }
-                    else if (height > max_size) { width *= max_size / height; height = max_size; }
+                    if (width > height) {
+                        if (width > max_size) { height *= max_size / width; width = max_size; }
+                    } else {
+                        if (height > max_size) { width *= max_size / height; height = max_size; }
+                    }
                     canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     currentCompressedImgBase64 = canvas.toDataURL('image/jpeg', 0.6);
                     document.getElementById('img-preview').src = currentCompressedImgBase64;
                     document.getElementById('img-preview-box').classList.remove('hidden');
-                    document.getElementById('img-status').innerText = "照片就緒";
+                    document.getElementById('img-status').innerText = "圖片已就緒";
                 };
-                img.src = e.target.result;
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
-
         function addExpense() {
             const item = document.getElementById('expense-item').value.trim();
-            const amount = parseInt(document.getElementById('expense-amount').value) || 0;
-            if(!item || amount <= 0) { alert("請輸入正確品項與金額！"); return; }
-            const expenses = JSON.parse(localStorage.getItem('tripExpenses') || '[]');
-            expenses.push({ id: Date.now(), item, amount, img: currentCompressedImgBase64 });
-            localStorage.setItem('tripExpenses', JSON.stringify(expenses));
-            document.getElementById('expense-item').value = "";
-            document.getElementById('expense-amount').value = "";
-            document.getElementById('expense-img-input').value = "";
-            document.getElementById('img-preview-box').className = "hidden";
+            const amount = parseInt(document.getElementById('expense-amount').value);
+            if (!item || isNaN(amount)) { alert("請填寫品項與正確金額"); return; }
+            const list = JSON.parse(localStorage.getItem('expenses_v2')) || [];
+            list.push({ id: Date.now(), item, amount, img: currentCompressedImgBase64 });
+            localStorage.setItem('expenses_v2', JSON.stringify(list));
+            document.getElementById('expense-item').value = '';
+            document.getElementById('expense-amount').value = '';
+            document.getElementById('expense-img-input').value = '';
+            document.getElementById('img-preview-box').class = "hidden";
             document.getElementById('img-status').innerText = "未選取照片";
             currentCompressedImgBase64 = "";
             loadExpenses();
         }
-
         function loadExpenses() {
-            const expenses = JSON.parse(localStorage.getItem('tripExpenses') || '[]');
-            const listEl = document.getElementById('expense-list');
+            const container = document.getElementById('expense-list');
+            container.innerHTML = '';
+            const list = JSON.parse(localStorage.getItem('expenses_v2')) || [];
             const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-            listEl.innerHTML = "";
             let totalJpy = 0;
-            if(expenses.length === 0) {
-                listEl.innerHTML = `<p class="text-center text-[11px] text-slate-300 py-4">目前還沒有任何消費紀錄喔</p>`;
-            }
-            expenses.forEach(exp => {
+            list.forEach(exp => {
                 totalJpy += exp.amount;
-                let imgHtml = exp.img ? `<img src="${exp.img}" onclick="window.open(this.src)" class="h-8 w-8 object-cover rounded-lg border border-slate-100 cursor-zoom-in">` : '';
-                listEl.innerHTML += `
-                    <div class="flex items-center justify-between bg-slate-50/80 p-2 rounded-xl text-xs border border-slate-100/40">
-                        <div class="flex items-center space-x-2">
-                            ${imgHtml}
-                            <div>
-                                <p class="font-bold text-slate-700">${exp.item}</p>
-                                <p class="text-[10px] text-slate-400">NT$ ${Math.round(exp.amount * rate).toLocaleString()}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="font-bold text-slate-700">¥ ${exp.amount.toLocaleString()}</span>
-                            <button onclick="deleteExpense(${exp.id})" class="text-slate-300 hover:text-red-400 text-[10px] pl-1"><i class="fa-solid fa-trash-can"></i></button>
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100/40 text-xs";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        ${exp.img ? `<img src="${exp.img}" onclick="window.open(this.src)" class="h-8 w-8 object-cover rounded-lg border border-slate-200 cursor-zoom-in">` : '<div class="h-8 w-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300"><i class="fa-solid fa-receipt"></i></div>'}
+                        <div>
+                            <p class="font-bold text-slate-600">${exp.item}</p>
+                            <p class="text-[10px] text-slate-400">NT$ ${Math.round(exp.amount * rate).toLocaleString()}</p>
                         </div>
                     </div>
+                    <div class="text-right flex items-center space-x-2">
+                        <span class="font-bold text-slate-700">¥ ${exp.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense(${exp.id})" class="text-slate-300 hover:text-red-400"><i class="fa-solid fa-circle-xmark"></i></button>
+                    </div>
                 `;
+                container.appendChild(div);
             });
             document.getElementById('expense-total-all').innerText = `¥ ${totalJpy.toLocaleString()} (NT$ ${Math.round(totalJpy * rate).toLocaleString()})`;
         }
-
         function deleteExpense(id) {
-            let expenses = JSON.parse(localStorage.getItem('tripExpenses') || '[]');
-            expenses = expenses.filter(e => e.id !== id);
-            localStorage.setItem('tripExpenses', JSON.stringify(expenses));
+            let list = JSON.parse(localStorage.getItem('expenses_v2')) || [];
+            list = list.filter(e => e.id !== id);
+            localStorage.setItem('expenses_v2', JSON.stringify(list));
             loadExpenses();
         }
-
         function clearExpenses() {
-            if(confirm("確定要刪除所有的記帳明細嗎？此操作無法還原。")) {
-                localStorage.removeItem('tripExpenses');
+            if(confirm("確定要清空所有記帳歷史明細嗎？")){
+                localStorage.removeItem('expenses_v2');
                 loadExpenses();
             }
         }
-
-        // ================= MEMO 備忘錄模組 =================
         function saveMemo() {
-            const text = document.getElementById('memo-input').value;
-            localStorage.setItem('tripMemo', text);
+            const txt = document.getElementById('memo-input').value;
+            localStorage.setItem('memo_v2', txt);
             loadMemo();
         }
-
         function loadMemo() {
-            const text = localStorage.getItem('tripMemo') || "";
-            document.getElementById('memo-input').value = text;
-            const displayBox = document.getElementById('memo-display-box');
-            const linksContainer = document.getElementById('memo-links-container');
-            displayBox.innerText = text || "（目前無備忘內容）";
-            linksContainer.innerHTML = "";
+            const txt = localStorage.getItem('memo_v2') || "";
+            document.getElementById('memo-input').value = txt;
+            document.getElementById('memo-display-box').innerText = txt || "目前無任何備忘內容";
+            
+            const linkBox = document.getElementById('memo-links-container');
+            linkBox.innerHTML = '';
             const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const urls = text.match(urlRegex);
-            if(urls) {
-                urls.forEach((url, i) => {
-                    linksContainer.innerHTML += `
-                        <a href="${url}" target="_blank" class="text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-full flex items-center shadow-2xs">
-                            <i class="fa-solid fa-link mr-1"></i> 連結 ${i+1}
-                        </a>
-                    `;
+            const links = txt.match(urlRegex);
+            if(links) {
+                links.forEach(url => {
+                    const a = document.createElement('a');
+                    a.href = url; a.target = "_blank";
+                    a.className = "text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-lg max-w-[180px] truncate block font-medium";
+                    a.innerHTML = `<i class="fa-solid fa-link mr-1"></i> ${url}`;
+                    linkBox.appendChild(a);
                 });
             }
         }
