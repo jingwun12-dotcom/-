@@ -601,114 +601,15 @@
         function renderItinerary(customPlans) {
             const container = document.getElementById("day-schedule-container");
             container.innerHTML = "";
+            const todayFixed = fixedItinerary[currentDay] || [];
+            const todayCustom = customPlans.filter(p => parseInt(p.day) === currentDay);
+            const allItems = [ ...todayFixed.map(f => ({ ...f, isFixed: true })), ...todayCustom.map(c => ({ ...c, isFixed: false })) ];
+            allItems.sort((a, b) => a.time.localeCompare(b.time));
 
-            const dayFixed = fixedItinerary[currentDay] || [];
-            const dayCustom = cloudCustomPlans.filter(p => parseInt(p.day) === currentDay);
-            const totalDayPlans = [...dayFixed, ...dayCustom].sort((a, b) => a.time.localeCompare(b.time));
-
-            if (totalDayPlans.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">今天尚未安排任何活動行程</p>`;
+            if(allItems.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">今天目前沒有安排行程</p>`;
                 return;
             }
-
-            totalDayPlans.forEach((plan) => {
-                const isFixed = plan.id && plan.id.startsWith('f');
-                const item = document.createElement("div");
-                item.className = "relative pl-8 group";
-                
-                // 重要高亮渲染判定
-                const isImportant = plan.important;
-                const cardBg = isImportant ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100';
-
-                item.innerHTML = `
-                    <div class="absolute left-1.5 top-1.5 w-3.5 h-3.5 bg-white border-2 border-emerald-400 rounded-full group-hover:scale-110 transition-transform"></div>
-                    <div class="${cardBg} p-3.5 rounded-2xl border shadow-2xs space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md">${plan.time}</span>
-                            <div class="flex items-center space-x-2">
-                                ${plan.map ? `<a href="${plan.map}" target="_blank" class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-location-dot"></i> 地圖</a>` : ''}
-                                
-                                <button onclick="editPlanInline('${plan.id || ''}', ${isFixed})" class="text-slate-400 hover:text-blue-500 text-xs p-1" title="編輯行程">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                
-                                <button onclick="deletePlanInline('${plan.id || ''}', ${isFixed})" class="text-slate-400 hover:text-rose-500 text-xs p-1" title="刪除行程">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <h4 class="text-xs font-bold text-slate-800">${plan.title}</h4>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">${plan.desc}</p>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        // 📝 行程修改處理（同步雲端資料庫 Firebase 且不破壞原有資料結構）
-        window.editPlanInline = async function(planId, isFixed) {
-            let targetPlan;
-            if (isFixed) {
-                targetPlan = fixedItinerary[currentDay].find(p => p.id === planId);
-            } else {
-                targetPlan = cloudCustomPlans.find(p => p.id === planId);
-            }
-
-            if (!targetPlan) return;
-
-            const newTime = prompt("修改時間 (格式如 08:30)：", targetPlan.time);
-            if (newTime === null) return; 
-            const newTitle = prompt("修改活動/景點名稱：", targetPlan.title);
-            if (newTitle === null) return;
-            const newDesc = prompt("修改詳細說明：", targetPlan.desc);
-            if (newDesc === null) return;
-            const newMap = prompt("修改 Google Maps 連結 (選填)：", targetPlan.map || "");
-            if (newMap === null) return;
-
-            if (!newTime.trim() || !newTitle.trim()) {
-                return alert("時間與名稱不能留空！");
-            }
-
-            // 更新記憶體中的欄位
-            targetPlan.time = newTime.trim();
-            targetPlan.title = newTitle.trim();
-            targetPlan.desc = newDesc.trim();
-            targetPlan.map = newMap.trim();
-
-            // 如果是使用者上傳到 Firebase 的自訂行程，同步覆蓋回雲端
-            if (!isFixed) {
-                try {
-                    const docRef = doc(db, "plans", "customItinerary");
-                    await setDoc(docRef, { list: cloudCustomPlans });
-                } catch (e) {
-                    console.error("Firebase 更新失敗：", e);
-                }
-            }
-            
-            renderDaySchedule();
-            alert("行程修改成功！");
-        };
-
-        // 🗑️ 行程刪除處理（帶有二次確認機制）
-        window.deletePlanInline = async function(planId, isFixed) {
-            if (!confirm("⚠️ 確定要刪除這項行程嗎？\n刪除後將無法復原。")) {
-                return; 
-            }
-
-            if (isFixed) {
-                fixedItinerary[currentDay] = fixedItinerary[currentDay].filter(p => p.id !== planId);
-            } else {
-                cloudCustomPlans = cloudCustomPlans.filter(p => p.id !== planId);
-                try {
-                    const docRef = doc(db, "plans", "customItinerary");
-                    await setDoc(docRef, { list: cloudCustomPlans });
-                } catch (e) {
-                    console.error("Firebase 刪除同步失敗：", e);
-                }
-            }
-
-            renderDaySchedule();
-        };
 
             allItems.forEach(item => {
                 const card = document.createElement("div");
