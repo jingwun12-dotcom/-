@@ -204,10 +204,8 @@
                     <div class="flex justify-between"><span>全團總花費 (台幣估算):</span><span id="split-total-twd" class="font-bold">NT$ 0</span></div>
                     <div class="flex justify-between border-b border-slate-600/50 pb-1"><span>每人平均應付 (日幣):</span><span id="split-avg-jpy" class="text-amber-300 font-bold">¥ 0</span></div>
                 </div>
-                <div id="split-users-detail" class="space-y-1.5 text-[11px] pt-1">
-                    </div>
-                <div id="split-settlement-plan" class="border-t border-slate-600/40 pt-2 text-[11px] text-emerald-200 space-y-1">
-                    </div>
+                <div id="split-users-detail" class="space-y-1.5 text-[11px] pt-1"></div>
+                <div id="split-settlement-plan" class="border-t border-slate-600/40 pt-2 text-[11px] text-emerald-200 space-y-1"></div>
             </div>
 
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -304,8 +302,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
+        // Firebase 初始化設定
         const firebaseConfig = {
             apiKey: "AIzaSyD7ISA5yXaNuXljUmxfjWSnV1F30jSkqmY",
             authDomain: "japan-trip-1caaa.firebaseapp.com",
@@ -318,13 +317,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // 全域狀態管理
         let currentUser = null;
         let currentDay = 1;
         let currentListTab = 'pre';
         let base64Avatar = "";
         let allUsersCached = [];
 
-        // 固定核心行程表
+        // 核心固定行程內容
         const fixedItinerary = {
             1: [
                 { time: "06:30", title: "第一航廈集合", desc: "準備搭乘星宇航空，確認手提行李無違禁品。" },
@@ -333,7 +333,7 @@
                 { time: "14:13", title: "抵達 鶴橋站", desc: "轉乘至鶴橋，直奔下榻飯店放行李。" },
                 { time: "14:27", title: "下榻放行李：ESLEAD酒店-大阪鵲橋", desc: "辦理 Check-in 或寄放行李，稍作休息。" },
                 { time: "15:08", title: "景點：大阪城", desc: "參觀天守閣，欣賞宏偉護城河與歷史古蹟。" },
-                { time: "17:08", title: "景點：Detective Conan Bronze Statue", desc: "尋找讀賣電視台前的大阪名偵探柯南銅像打卡拍照！" },
+                { time: "17:08", title: "景點：Detective Conan Bronze Statue", desc: "尋找讀賣電視台前的大盤名偵探柯南銅像打卡拍照！" },
                 { time: "17:55", title: "逛街：心齋橋筋商店街", desc: "藥妝、服飾主戰場，店鋪極多極好逛。" },
                 { time: "18:59", title: "打卡：Glico Sign Dotonbori", desc: "必拍道頓堀固力果跑跑人霓虹看板，晚餐可在此街享用。" },
                 { time: "20:18", title: "返回飯店休息", desc: "返回 ESLEAD酒店-大阪鵲橋，養精蓄銳。" }
@@ -364,7 +364,7 @@
                 { time: "18:00", title: "下榻放行李：Villa Fontaine 神戶三宮", desc: "辦理 Check-In 入住，今晚住在浪漫的神戶。" },
                 { time: "19:30", title: "景點：Mosaic Big Ferris Wheel", desc: "搭乘馬賽克廣場摩天輪，眺望神戶港絢麗港景。" },
                 { time: "20:45", title: "景點：神戶港塔", desc: "欣賞神戶地標「紅色鼓狀」夜間燈光秀。" },
-                { time: "21:05", title: "返回飯店", desc: "返回 ホテルヴィラフォンテーヌ神戸三宮 休息。" }
+                { time: "21:05", title: "返回飯店", desc: "返回 ホテルヴィラフォンテーヌ神戶三宮 休息。" }
             ],
             5: [
                 { time: "08:00", title: "飯店出發", desc: "今日主攻神戶及姬路經典大景點。" },
@@ -373,7 +373,7 @@
                 { time: "14:50", title: "景點：神戶北野異人館街", desc: "參觀風見雞館、萌黃之館，感受濃郁的歐洲異國街道風情。" },
                 { time: "17:50", title: "交通：摩耶山展望台", desc: "搭乘纜車上山，準備迎接日本三大百萬夜景。" },
                 { time: "18:50", title: "百萬夜景：掬星台", desc: "俯瞰神戶、大阪灣閃耀的珍珠級夜景，夜間山頂風大需保暖。" },
-                { time: "21:00", title: "返回飯店", desc: "返回 ホテルヴィラフォンテーヌ神戸三宮。" }
+                { time: "21:00", title: "返回飯店", desc: "返回 ホテルヴィラフォンテーヌ神戶三宮。" }
             ],
             6: [
                 { time: "08:00", title: "飯店退房並出門", desc: "今日無多餘行程，收拾好戰利品準備前往機場。" },
@@ -382,536 +382,710 @@
             ]
         };
 
-        // 預設 18 個景點深度誌（包含 Google Maps 連結）
+        // 核心固定景點筆記
         const fixedGuides = [
-            { tag: "大阪 // 歷史", title: "大阪城", map: "https://maps.app.goo.gl/gctZ6jE3D4bXpbyK9", desc: "日本三名城之一，天守閣內展示大量豐臣秀吉歷史文物。護城河及巨石城牆非常壯觀。\n● 玩法：搭乘電梯或步行上天守閣展望台鳥瞰大阪市區景致。\n● 建議花費：純逛公園免費；天守閣門票 ¥600。", tip: "💡 注意：天守閣下午 4:30 停止入場，建議提早抵達。" },
-            { tag: "大阪 // 動漫打卡", title: "名偵探柯南銅像 (Detective Conan Bronze Statue)", map: "https://maps.app.goo.gl/wS3x8bZ6mGgXWq6C6", desc: "位於讀賣電視台大樓前方，有柯南、少年偵探團以及毛利小五郎的精緻青銅雕像，是柯南迷必朝聖打卡點！\n● 玩法：與柯南擺出經典的『真相只有一個』姿勢合照。\n● 建議花費：免費參觀。", tip: "💡 小撇步：電視台內部一樓大廳偶爾也有動漫相關佈置，可以順道入內探訪。" },
-            { tag: "大阪 // 購物天堂", title: "心齋橋筋商店街", map: "https://maps.app.goo.gl/N8wN9vBvA6ZkWXGv8", desc: "大阪最代表性的長形拱廊商店街，聚集各大藥妝店、UNIQLO、GU 以及各式潮流服飾與小吃。\n● 玩法：瘋狂貨比三家買藥妝，記得準備好優惠券與護照辦理免稅。\n● 建議花費：依個人購物預算而定，藥妝消費滿 ¥5000 可免稅。", tip: "💡 提示：下午至晚上人潮極度擁擠，顧好隨身財物。" },
-            { tag: "大阪 // 經典地標", title: "道頓堀固力果跑跑人 (Glico Sign)", map: "https://maps.app.goo.gl/N6V6b7v6mZwkWmX9A", desc: "戎橋旁的巨大固力果跑跑人看板是大阪的代名詞，周邊滿是立體誇張招牌（蟹道樂、章魚燒）。\n● 玩法：在戎橋上與跑跑人單腳舉手合影，並品嚐章魚燒與大阪燒。\n● 建議花費：街區免費；小吃每份約 ¥600 - ¥1000。", tip: "💡 最佳拍照點：過橋到河岸下方走道，由下往上拍人像最不容易被路人擋住。" },
-            { tag: "京都 // 神社", title: "伏見稻荷大社", map: "https://maps.app.goo.gl/B4V4v7m7mZwkWm6A8", desc: "以漫延整座山頭的「千本鳥居」聞名，供奉商業與農業之神狐狸使者。\n● 玩法：沿著紅色鳥居隧道步行慢遊，購買狐狸繪馬寫下心願。\n● 建議花費：免費入內。", tip: "💡 注意事項：想拍空景務必像我們一樣排在 8:30 前抵達，否則人潮會非常驚人！" },
-            { tag: "京都 // 美食廚房", title: "錦市場", map: "https://maps.app.goo.gl/C6b7b7v6mZwkWm7A9", desc: "擁有數百年歷史的傳統市場，街道上方有彩色玻璃頂棚，齊聚上百家京料理食材與特色小吃店。\n● 綜合玩法：邊走邊看（但不可邊走邊吃！要站在店家規定區域吃完），必吃豆乳甜甜圈、章魚鵪鶉蛋串、現烤海鮮。\n● 建議花費：小吃每樣 ¥300 - ¥800 不等。", tip: "💡 提醒：這裡嚴禁邊走邊吃，垃圾請直接丟在購買店家的垃圾桶中。" },
-            { tag: "京都 // 世界遺產", title: "清水寺", map: "https://maps.app.goo.gl/D7v7v7m7mZwkWm8B9", desc: "京都最古老的寺院，全殿不費一根釘子、全木造的「清水舞台」懸空建於懸崖上，極其震撼。\n● 玩法：參拜大殿、至音羽瀑布飲用泉水（健康、學業、戀愛三選一），隨後順遊二三年坂古街。\n● 建議花費：門票 ¥400。", tip: "💡 散策提示：沿途石階梯較多，務必穿著最好走的鞋子。" },
-            { tag: "京都 // 傳統街廓", title: "祇園", map: "https://maps.app.goo.gl/E8v7v7m7mZwkWm9C9", desc: "京都最具代表性的花街，以傳統木造格子窗建築「町家」為特色，充滿濃濃的江戶風情。\n● 玩法：黃昏時分漫步，感受古都華燈初上的神祕浪漫氛圍。\n● 建議花費：免費散步。", tip: "💡 規記：請勿任意拉扯或強行拍攝路過的藝妓，保持禮貌距離。" },
-            { tag: "京都 // 花街小巷", title: "花見小路通", map: "https://maps.app.goo.gl/F9v7v7m7mZwkWmAD9", desc: "祇園精華區域，街道由石板鋪成，兩旁盡是高級料亭與茶屋，是京都高檔文化的象徵。\n● 玩法：欣賞傳統高雅的日式建築門面，體驗靜謐的歷史感。\n● 建議花費：免門票；若在此用餐費用極高。", tip: "💡 嚴格禁止：部分私人巷弄有禁止拍照告示，違者會罰款 ¥10000，請復加留意路標！" },
-            { tag: "大阪 // 夢幻樂園", title: "日本環球影城 (USJ)", map: "https://maps.app.goo.gl/G7v7v7m7mZwkWmBE9", desc: "世界級主題樂園！最新「超級任天堂世界」與經典「哈利波特」是必衝園區。\n● 核心玩法：開園立刻衝任天堂園區保證入園，或提前買好快速通關。必玩馬利歐賽車與禁忌之旅。\n● 建議花費：門票約 ¥8600 - ¥10400 (依日期波動)。", tip: "💡 超重要：出發前務必下載 USJ 官方 APP，進園第一時間搶當天熱門園區的保存券 (整理券)。" },
-            { tag: "條拉 // 野生互動", title: "奈良公園", map: "https://maps.app.goo.gl/H8v7v7m7mZwkWmCF9", desc: "擁有上千隻野生梅花鹿的巨大自然公園，這裡的鹿被視為神的使者，聰明且熱情。\n● 玩法：向攤販購買鹿仙貝，對小鹿點頭敬禮，牠們也會對你鞠躬回禮喔！\n● 建議花費：公園免費；鹿仙貝每份 ¥200。", tip: "💡 警告：若手上拿著仙貝卻故意不給，可能會被鹿頂撞、咬衣服或撞屁股，請速戰速決！" },
-            { tag: "奈良 // 木造之巔", title: "東大寺 (Tōdai-ji)", map: "https://maps.app.goo.gl/I9v7v7m7mZwkWmDG9", desc: "距今千年以上歷史，其大佛殿為全世界現存最大的木造建築，殿內高達 15 公尺的盧舍那大佛令人屏息。\n● 玩法：參拜大佛，並嘗試挑戰穿過殿內柱子底部的「大佛鼻孔」巨洞（傳說穿過能保平安）。\n● 建議花費：大佛殿門票 ¥600。", tip: "💡 提示：東大寺外圍的鹿群相對溫和，適合合照。" },
-            { tag: "大阪 // 復古老街", title: "通天閣 & 新世界", map: "https://maps.app.goo.gl/J9v7v7m7mZwkWmEH9", desc: "充滿昭和復古感的老街區，通天閣頂端有幸運之神 Billiken 雕像，近年新增了刺激的巨型透明滑梯。\n● 玩法：拍下街區華麗誇張的河豚大燈籠，上通天閣俯瞰，晚餐吃在地著名的元祖串炸。\n● 建議花費：通天閣展望台 ¥900；巨型溜滑梯體驗 ¥1000。", tip: "💡 小建議：通天閣塔頂溜滑梯速度極快、非常刺激，心臟病或易頭暈者請衡量。" },
-            { tag: "神戶 // 港灣浪漫", title: "馬賽克摩天輪 (Mosaic Ferris Wheel)", map: "https://maps.app.goo.gl/K9v7v7m7mZwkWmFI9", desc: "位於神戶港港灣人工島 Mosaic 廣場旁，隨著大摩天輪緩緩上升，神戶港、六甲山與明石海峽大橋的立體夜景盡收眼底。\n● 玩法：情侶約會必排，夜晚車廂會有繽紛的發光動畫，從車廂拍向神戶港塔視角絕佳。\n● 建議花費：摩天輪搭乘費 ¥800/人。", tip: "💡 拍點：摩天輪下方也是拍攝神戶港夜景建築群的一線極佳角度。" },
-            { tag: "神戶 // 地標建築", title: "神戶港塔 (Kobe Port Tower)", map: "https://maps.app.goo.gl/L9v7v7m7mZwkWmGJ9", desc: "世界首創管狀網目結構的紅高塔，被譽為「鋼鐵美女」。設有高空透明步道與 360 度旋轉咖啡廳。\n● 玩法：在港邊拍攝其與海洋博物館交織的絢麗燈光秀，亦可購票上塔觀景。\n● 建議花費：純外觀欣賞免費；登塔展望層門票約 ¥1000。", tip: "💡 亮點：神戶港塔夜間點燈非常唯美，是神戶最著名的地標風景。" },
-            { tag: "神戶 // 世界遺產", title: "姬路城 (白鷺城)", map: "https://maps.app.goo.gl/M9v7v7m7mZwkWmHK9", desc: "日本保存最完好的江戶時代城郭，由於外牆通體雪白，形態優美如白鷺展翅，為日本第一國寶。\n● 玩法：沿著迂迴防禦城道登天守閣，欣賞全木造卡榫樑柱結構，極致震撼。\n● 建議花費：門票 ¥1000。", tip: "💡 備註：從神戶三宮搭乘火車前往約 40-50 分鐘，大天守閣內樓梯極陡，需脫鞋攀爬。" },
-            { tag: "神戶 // 洋式購物", title: "元町商店街 & 南京町", map: "https://maps.app.goo.gl/N9v7v7m7mZwkWmIL9", desc: "元町商店街林立眾多百年歐風老店與咖啡廳，質感沉穩；緊鄰的「南京町」則是關西著名中華街。\n● 玩法：在元町喝下午茶買神戶風月堂洋菓子，再去南京町吃老祥記豚饅。\n● 建議花費：小吃零錢價約 ¥200 - ¥500。", tip: "💡 提示：南京町假日人潮洶湧，購買排隊名店小吃要有排隊心理準備。" },
-            { tag: "神戶 // 異國風情", title: "神戶北野異人館街", map: "https://maps.app.goo.gl/O9v7v7m7mZwkWmJM9", desc: "明治開港時期外國領事與商人的精緻洋房聚落，依山而建，街道充滿歐洲小鎮風情。\n● 玩法：漫步斜坡古街，參觀指標性的「風見雞館」與「萌黃之館」，並朝聖全日本最美的星巴克北野異人館店。\n● 建議花費：街區散步免費；部分異人館內部參觀門票 ¥300 - ¥500 不等。", tip: "💡 穿著：整區都是連續陡坡，請務必著舒適好走的運動鞋。" },
-            { tag: "神戶 // 百萬夜景", title: "摩耶山掬星台", map: "https://maps.app.goo.gl/P9v7v7m7mZwkWmKN9", desc: "日本三大夜景之一！意指這裡的夜景璀璨閃耀，猶如「用手即可舀起漫天繁星」般夢幻。\n● 玩法：搭乘摩耶登山纜車與高空纜車 (Maya Viewline) 攻頂，眺望整個大阪灣無敵星河夜景。\n● 建議花費：纜車來回票約 ¥1560。", tip: "💡 重大警告：山上體感溫度比平地低 5-10 度，即使是 6 月夜晚也**非常寒冷、風極大**，務必攜帶防風外套！並注意下山末班纜車時間。" }
+            { tag: "大阪 // 歷史", title: "大阪城", map: "https://maps.google.com/?q=大阪城", desc: "關西三名城之一，由豐臣秀吉始建，後經德川幕府重建。天守閣內部已改建為歷史博物館。\n● 綜合玩法：登上天守閣展望台鳥瞰大阪市容，隨後在櫻門前合影，春季可至西之丸庭園賞櫻。\n● 建議花費：天守閣門票 ¥600。" , tip: "💡 小提示：若持有大阪周遊卡，可免費進入天守閣與搭乘御座船！" },
+            { tag: "大阪 // 趣味打卡", title: "Detective Conan Bronze Statue", map: "https://maps.google.com/?q=讀賣電視台", desc: "位於大阪城旁「讀賣電視台 (ytv)」新大樓前廣場。讀賣電視台是製作動畫《名偵探柯南》的大本營。\n● 核心玩法：尋找少年偵探團及毛利小五郎的等身大銅像拍照。\n● 建議花費：免費戶外打卡點。", tip: "💡 柯南粉注意：大樓內部大廳有時會有柯南主題造景或周邊販售，可以進去碰碰運氣！" },
+            { tag: "大阪 // 購物繁華", title: "心齋橋筋商店街", map: "https://maps.google.com/?q=心齋橋", desc: "大阪最代表性的頂棚式購物街，長達數百公尺，聚集了無數藥妝店、服飾品牌與雜貨店。\n● 攻略玩法：從心齋橋地鐵站一路往南走到道頓堀，雨天也完全不用淋雨，是主戰場。\n● 建議花費：各憑本事（藥妝店免稅門檻為 ¥5000）。", tip: "💡 購物技巧：熱門連鎖藥妝店（松本清、大國）通常備有高成數折價券，結帳前記得上網出示手機條碼。" },
+            { tag: "大阪 // 經典地標", title: "Glico Sign Dotonbori", map: "https://maps.google.com/?q=道頓堀跑跑人", desc: "矗立在道頓堀戎橋旁的巨大江崎格力高跑跑人霓虹看板，自1935年設立以來已更換至第六代，是大阪的精神象徵。\n● 打卡玩法：在戎橋上（或橋下的河岸步道）擺出經典的「雙手高舉、單腳抬起」跑跑人姿勢拍照留念。\n● 建議花費：免費。", tip: "💡 拍攝亮點：夜間霓虹燈背景會定時變換日本各大景點景緻，建議晚上前來拍攝，畫面最吸睛！" },
+            { tag: "京都 // 千本鳥居", title: "伏見稻荷大社", map: "https://maps.google.com/?q=伏見稻荷大社", desc: "日本全國稻荷神社的總本宮，供奉保佑商業繁榮、五穀豐收的神明。綿延整座山頭的「千本鳥居」最為震撼。\n● 爬山玩法：從正殿出發，穿過朱紅色的千本鳥居至「奧社奉拜所」，體力好者可挑戰登頂「稻荷山」（全程約2小時）。\n● 建議花費：免門票。", tip: "💡 避開人潮：這是京都人氣第一的景點。建議早上 07:30 - 08:00 前抵達，才能拍到完全空無一人的鳥居美景。" },
+            { tag: "京都 // 在地廚房", title: "錦市場", map: "https://maps.google.com/?q=錦市場", desc: "擁有400年歷史的古老市場，一條長約400公尺的狹窄街道上，開滿了約130家販售京都傳統食材、熟食與小吃的店鋪。\n● 綜合玩法：邊走邊看（但不可邊走邊吃！要站在店家規定區域吃完），必吃豆乳甜甜圈、章魚鵪鶉蛋串、現烤海鮮。\n● 建議花費：小吃每樣 ¥300 - ¥800 不等。", tip: "💡 提醒：這裡嚴禁邊走邊吃，垃圾請直接丟在購買店家的垃圾桶中。" },
+            { tag: "京都 // 世界遺產", title: "清水寺", map: "https://maps.google.com/?q=清水寺", desc: "京都最古老的寺院，全殿不費一根釘子、全木造的「清水舞台」懸空建於懸崖上，極其震撼。\n● 玩法：參拜大殿、至音羽瀑布飲用泉水（健康、學業、戀愛三選一），隨後順遊二三年坂古街。\n● 建議花費：門票 ¥400。", tip: "💡 散策提示：沿途石階梯較多，務必穿著最好走的鞋子。" }
         ];
 
-        // 視窗全域導航切換
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            const targetSec = document.getElementById(`sec-${tabId}`) || document.getElementById(tabId);
-            if(targetSec) targetSec.classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.className = "nav-btn flex flex-col items-center space-y-1 text-slate-400");
-            const targetNav = document.getElementById(`nav-${tabId}`);
-            if(targetNav) targetNav.className = "nav-btn flex flex-col items-center space-y-1 text-emerald-500";
-            
-            if(tabId === 'lists') renderLocalLists();
+        // 預設清單項目
+        const defaultChecklist = {
+            pre: [
+                { id: "p1", text: "確認護照效期大於 6 個月", checked: false },
+                { id: "p2", text: "填寫日本 Visit Japan Web 申報並截圖 QR Code", checked: false },
+                { id: "p3", text: "投保旅遊平安險、海外突發疾病醫療險", checked: false },
+                { id: "p4", text: "預訂網卡 / eSIM 或租借 Wi-Fi 分享器", checked: false },
+                { id: "p5", text: "印出紙本機票與飯店訂房確認單備用", checked: false }
+            ],
+            carry: [
+                { id: "ca1", text: "護照正本、身份證影本、大頭照2張", checked: false },
+                { id: "ca2", text: "日幣現金、信用卡（回饋好且已開卡）", checked: false },
+                { id: "ca3", text: "手機、行動電源、充電線、豆腐頭", checked: false },
+                { id: "ca4", text: "環球影城電子門票、JR Pass 實體券/QR", checked: false }
+            ],
+            check: [
+                { id: "ch1", text: "衣物、外套、睡衣、內衣褲、襪子", checked: false },
+                { id: "ch2", text: "個人保養品、化妝品、防曬乳、隱形眼鏡", checked: false },
+                { id: "ch3", text: "常備藥品（感冒藥、止痛藥、暈車藥、OK蹦）", checked: false },
+                { id: "ch4", text: "雨傘或輕便雨衣", checked: false },
+                { id: "ch5", text: "空行李箱（預留戰利品空間！）", checked: false }
+            ]
         };
+
+        // ====== 初始化與身分登入機制 ======
+        function initApp() {
+            // 監聽雲端使用者身分列表
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                allUsersCached = [];
+                snapshot.forEach(doc => allUsersCached.push({ id: doc.id, ...doc.data() }));
+                renderLoginUsersList();
+                calculateSplits();
+            });
+
+            // 讀取本地快取身分
+            const savedUser = localStorage.getItem("travel_user");
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById("login-overlay").classList.add("hidden");
+                updateHeaderProfile();
+                startSyncData();
+            } else {
+                document.getElementById("login-overlay").classList.remove("hidden");
+            }
+        }
+
+        function renderLoginUsersList() {
+            const listEl = document.getElementById("login-users-list");
+            listEl.innerHTML = "";
+            allUsersCached.forEach(u => {
+                const div = document.createElement("div");
+                div.className = "flex flex-col items-center p-3 rounded-2xl border border-slate-100 bg-slate-50 cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition group animate-fade-in";
+                div.onclick = () => loginAsUser(u);
+                
+                const imgStr = u.avatar || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cbd5e1'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
+                
+                div.innerHTML = `
+                    <img src="${imgStr}" class="w-12 h-12 rounded-full object-cover border border-white shadow-xs group-hover:scale-105 transition">
+                    <span class="text-xs font-bold text-slate-600 mt-2 truncate w-full">${u.name}</span>
+                `;
+                listEl.appendChild(div);
+            });
+        }
 
         window.toggleAddUserForm = function(show) {
-            document.getElementById('add-user-form').classList.toggle('hidden', !show);
+            document.getElementById("add-user-form").classList.toggle("hidden", !show);
         };
 
-        window.previewNewUserAvatar = function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    base64Avatar = e.target.result;
-                    document.getElementById('new-avatar-preview').src = base64Avatar;
-                    document.getElementById('new-avatar-preview').classList.remove('hidden');
-                    document.getElementById('new-avatar-icon').classList.add('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
+        window.previewNewUserAvatar = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                base64Avatar = evt.target.result;
+                document.getElementById("new-avatar-preview").src = base64Avatar;
+                document.getElementById("new-avatar-preview").classList.remove("hidden");
+                document.getElementById("new-avatar-icon").classList.add("hidden");
+            };
+            reader.readAsDataURL(file);
         };
 
         window.createNewUser = async function() {
-            const nameInput = document.getElementById('new-user-name').value.trim();
-            if (!nameInput) return alert("請輸入暱稱");
-            const avatarUrl = base64Avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=" + nameInput;
+            const nameInput = document.getElementById("new-user-name").value.trim();
+            if (!nameInput) return alert("請輸入成員暱稱！");
+            
+            const newUserObj = {
+                name: nameInput,
+                avatar: base64Avatar || ""
+            };
+
             try {
-                await addDoc(collection(db, "users"), { name: nameInput, avatar: avatarUrl, createdAt: Date.now() });
-                document.getElementById('new-user-name').value = "";
-                document.getElementById('new-avatar-preview').classList.add('hidden');
-                document.getElementById('new-avatar-icon').classList.remove('hidden');
-                base64Avatar = "";
-                toggleAddUserForm(false);
-            } catch (e) { console.error(e); }
+                const docRef = await addDoc(collection(db, "users"), newUserObj);
+                newUserObj.id = docRef.id;
+                loginAsUser(newUserObj);
+            } catch (err) {
+                console.error(err);
+                alert("建立失敗，請重試！");
+            }
         };
 
-        window.loginAs = function(name, avatar) {
-            currentUser = { name, avatar };
-            document.getElementById('current-user-name').innerText = name;
-            document.getElementById('current-user-avatar').src = avatar;
-            document.getElementById('login-overlay').classList.add('hidden');
-        };
+        function loginAsUser(userObj) {
+            currentUser = userObj;
+            localStorage.setItem("travel_user", JSON.stringify(userObj));
+            document.getElementById("login-overlay").classList.add("hidden");
+            updateHeaderProfile();
+            
+            // 清空表單
+            document.getElementById("new-user-name").value = "";
+            document.getElementById("new-avatar-preview").src = "";
+            document.getElementById("new-avatar-preview").classList.add("hidden");
+            document.getElementById("new-avatar-icon").classList.remove("hidden");
+            base64Avatar = "";
+            toggleAddUserForm(false);
+
+            startSyncData();
+        }
+
+        function updateHeaderProfile() {
+            if (!currentUser) return;
+            document.getElementById("current-user-name").innerText = currentUser.name;
+            if (currentUser.avatar) {
+                document.getElementById("current-user-avatar").src = currentUser.avatar;
+            } else {
+                document.getElementById("current-user-avatar").src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
+            }
+        }
 
         window.logoutUser = function() {
-            currentUser = null;
-            document.getElementById('login-overlay').classList.remove('hidden');
+            if (confirm("要登出目前成員身分，切換至其他人嗎？")) {
+                localStorage.removeItem("travel_user");
+                currentUser = null;
+                document.getElementById("login-overlay").classList.remove("hidden");
+            }
         };
 
-        // 即時讀取 Firebase 雲端成員
-        onSnapshot(collection(db, "users"), (snapshot) => {
-            const listDiv = document.getElementById('login-users-list');
-            listDiv.innerHTML = "";
-            allUsersCached = [];
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                allUsersCached.push(data.name);
-                const item = document.createElement('div');
-                item.className = "flex flex-col items-center p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition";
-                item.onclick = () => loginAs(data.name, data.avatar);
-                item.innerHTML = `
-                    <img src="${data.avatar}" class="w-10 h-10 rounded-full object-cover border border-white shadow-xs">
-                    <span class="text-[10px] font-bold mt-1 text-slate-600 truncate w-full text-center">${data.name}</span>
-                `;
-                listDiv.appendChild(item);
+        // ====== 雲端 Firestore 數據實時監聽與串接 ======
+        function startSyncData() {
+            // 1. 行程表監聽 (依 time 排序)
+            const planQ = query(collection(db, "plans"), orderBy("time", "asc"));
+            onSnapshot(planQ, (snapshot) => {
+                let customPlans = [];
+                snapshot.forEach(doc => customPlans.push({ id: doc.id, ...doc.data() }));
+                renderItinerary(customPlans);
             });
-        });
 
-        // 行程 PLAN
-        window.switchDay = function(day) {
-            currentDay = day;
-            document.querySelectorAll('.day-btn').forEach(btn => {
+            // 2. 深度筆記監聽
+            onSnapshot(collection(db, "guides"), (snapshot) => {
+                let customGuides = [];
+                snapshot.forEach(doc => customGuides.push({ id: doc.id, ...doc.data() }));
+                renderGuides(customGuides);
+            });
+
+            // 3. 記帳歷史明細監聽
+            onSnapshot(collection(db, "expenses"), (snapshot) => {
+                let expenses = [];
+                snapshot.forEach(doc => expenses.push({ id: doc.id, ...doc.data() }));
+                renderExpensesList(expenses);
+            });
+
+            // 4. 清單動態監聽
+            onSnapshot(collection(db, "checklists"), (snapshot) => {
+                let cloudListData = {};
+                snapshot.forEach(doc => {
+                    cloudListData[doc.id] = doc.data();
+                });
+                renderChecklists(cloudListData);
+            });
+        }
+
+        // ====== 行程控制模組 ======
+        window.switchDay = function(dayNum) {
+            currentDay = dayNum;
+            document.querySelectorAll(".day-btn").forEach(btn => {
                 btn.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200";
             });
-            document.getElementById(`btn-d${day}`).className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-bold text-sm shadow-sm transition-all duration-200";
-            loadPlans();
+            const activeBtn = document.getElementById(`btn-d${dayNum}`);
+            if (activeBtn) activeBtn.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-bold text-sm shadow-sm transition-all duration-200";
+            
+            // 重新啟動同步刷新畫面
+            startSyncData();
         };
 
-        window.addCustomPlan = async function() {
-            const time = document.getElementById('plan-time').value.trim();
-            const title = document.getElementById('plan-title').value.trim();
-            const desc = document.getElementById('plan-desc').value.trim();
-            const isImportant = document.getElementById('plan-important').checked;
-            if (!title) return alert("請輸入活動名稱");
+        function renderItinerary(customPlans) {
+            const container = document.getElementById("day-schedule-container");
+            container.innerHTML = "";
 
-            await addDoc(collection(db, "plans"), { day: currentDay, time, title, desc, isImportant, createdAt: Date.now() });
-            document.getElementById('plan-time').value = "";
-            document.getElementById('plan-title').value = "";
-            document.getElementById('plan-desc').value = "";
-            document.getElementById('plan-important').checked = false;
+            // 先撈出本日固定的常規行程
+            const todayFixed = fixedItinerary[currentDay] || [];
+            // 再篩選出雲端中屬於本日的自訂行程
+            const todayCustom = customPlans.filter(p => parseInt(p.day) === currentDay);
+
+            // 合併並排序
+            const allItems = [
+                ...todayFixed.map(f => ({ ...f, isFixed: true })),
+                ...todayCustom.map(c => ({ ...c, isFixed: false }))
+            ];
+            allItems.sort((a, b) => a.time.localeCompare(b.time));
+
+            if (allItems.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">今天還沒有任何行程規劃唷 🍃</p>`;
+                return;
+            }
+
+            allItems.forEach(item => {
+                const li = document.createElement("li");
+                li.className = `relative pl-2 animate-fade-in group ${item.important ? 'bg-amber-50/60 rounded-2xl border border-amber-200/60 p-3 shadow-xs ring-4 ring-amber-400/10' : ''}`;
+                
+                let deleteBtnHtml = "";
+                if (!item.isFixed) {
+                    deleteBtnHtml = `<button onclick="deletePlan('${item.id}')" class="text-slate-300 hover:text-red-500 text-[10px] opacity-0 group-hover:opacity-100 transition absolute right-2 top-2"><i class="fa-solid fa-trash-can"></i></button>`;
+                }
+
+                li.innerHTML = `
+                    ${deleteBtnHtml}
+                    <div class="absolute left-[-25px] top-1.5 w-3 h-3 rounded-full bg-white border-2 ${item.important ? 'border-amber-400 scale-110 shadow-sm' : 'border-emerald-400'} z-10"></div>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-xs font-bold text-slate-400 font-mono">${item.time}</span>
+                        <h4 class="font-bold text-sm text-slate-700">${item.title} ${item.isFixed ? '' : '📍'}</h4>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1 leading-relaxed pl-9">${item.desc.replace(/\n/g, '<br>')}</p>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        window.addCustomPlan = async function() {
+            const time = document.getElementById("plan-time").value.trim();
+            const title = document.getElementById("plan-title").value.trim();
+            const desc = document.getElementById("plan-desc").value.trim();
+            const important = document.getElementById("plan-important").checked;
+
+            if (!time || !title) return alert("請至少輸入時間與行程名稱！");
+
+            const newPlan = {
+                day: currentDay,
+                time: time,
+                title: title,
+                desc: desc || "無額外說明",
+                important: important
+            };
+
+            await addDoc(collection(db, "plans"), newPlan);
+            
+            // 清空輸入框
+            document.getElementById("plan-time").value = "";
+            document.getElementById("plan-title").value = "";
+            document.getElementById("plan-desc").value = "";
+            document.getElementById("plan-important").checked = false;
         };
 
         window.deletePlan = async function(id) {
-            if(id.startsWith('fixed-')) {
-                alert("核心預設行程無法移除！");
-                return;
-            }
-            // 【防呆機制確認】
-            if (confirm("⚠️ 確定要刪除這項雲端自訂行程項目嗎？此動作無法復原！")) {
+            if (confirm("確定要刪除這項自訂行程嗎？")) {
                 await deleteDoc(doc(db, "plans", id));
             }
         };
 
-        function loadPlans() {
-            const container = document.getElementById('day-schedule-container');
+        // ====== 攻略控制模組 ======
+        function renderGuides(customGuides) {
+            const container = document.getElementById("guide-container");
             container.innerHTML = "";
-            
-            const dayFixed = fixedItinerary[currentDay] || [];
-            dayFixed.forEach((item, index) => {
-                const li = document.createElement('li');
-                const isHotel = item.title.includes("飯店") || item.title.includes("下榻");
-                li.className = `relative p-3 rounded-xl border ${isHotel ? 'bg-amber-50/80 border-amber-200 ring-2 ring-amber-300/20' : 'bg-white border-slate-100'} flex justify-between items-start`;
-                li.innerHTML = `
-                    <div>
-                        <span class="text-[10px] font-bold ${isHotel ? 'text-amber-600' : 'text-emerald-500'} block">${item.time}</span>
-                        <h4 class="text-xs font-bold text-slate-700 mt-0.5">${item.title}</h4>
-                        <p class="text-[11px] text-slate-400 mt-1">${item.desc}</p>
-                    </div>
-                    <button onclick="deletePlan('fixed-${index}')" class="text-slate-200 hover:text-red-400 text-xs p-1"><i class="fa-solid fa-lock"></i></button>
-                `;
-                container.appendChild(li);
-            });
 
-            const q = query(collection(db, "plans"), orderBy("time", "asc"));
-            onSnapshot(q, (snapshot) => {
-                document.querySelectorAll('.cloud-plan-item').forEach(el => el.remove());
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.day == currentDay) {
-                        const li = document.createElement('li');
-                        li.className = `cloud-plan-item relative p-3 rounded-xl border ${data.isImportant ? 'bg-amber-50/70 border-amber-200 ring-2 ring-amber-300/30' : 'bg-white border-indigo-100'} flex justify-between items-start`;
-                        li.innerHTML = `
-                            <div>
-                                <span class="text-[10px] font-bold text-indigo-500 block">${data.time || '加開行程'}</span>
-                                <h4 class="text-xs font-bold text-slate-700 mt-0.5">🌟 ${data.title}</h4>
-                                ${data.desc ? `<p class="text-[11px] text-slate-400 mt-1">${data.desc}</p>` : ''}
-                            </div>
-                            <button onclick="deletePlan('${doc.id}')" class="text-slate-300 hover:text-red-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
-                        `;
-                        container.appendChild(li);
-                    }
-                });
+            const allGuides = [
+                ...fixedGuides.map(g => ({ ...g, isFixed: true })),
+                ...customGuides.map(c => ({ ...c, isFixed: false }))
+            ];
+
+            allGuides.forEach(g => {
+                const card = document.createElement("div");
+                card.className = "bg-white rounded-2xl p-4 border border-slate-100 shadow-xs relative group animate-fade-in space-y-2";
+                
+                let deleteBtnHtml = "";
+                if (!g.isFixed) {
+                    deleteBtnHtml = `<button onclick="deleteGuide('${g.id}')" class="text-slate-300 hover:text-red-500 text-[11px] opacity-0 group-hover:opacity-100 transition absolute right-3 top-3"><i class="fa-solid fa-trash-can"></i></button>`;
+                }
+
+                let mapLinkHtml = g.map ? `<a href="${g.map}" target="_blank" class="text-[11px] text-blue-500 font-bold hover:underline ml-1"><i class="fa-solid fa-location-dot mr-1"></i>查看地圖</a>` : '';
+
+                card.innerHTML = `
+                    ${deleteBtnHtml}
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold tracking-wider">${g.tag}</span>
+                        ${mapLinkHtml}
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-700">${g.title}</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed whitespace-pre-line">${g.desc}</p>
+                    ${g.tip ? `<div class="bg-amber-50/50 p-2 rounded-xl border border-amber-100/40 text-[11px] text-amber-700 font-medium leading-relaxed">${g.tip}</div>` : ''}
+                `;
+                container.appendChild(card);
             });
         }
 
-        // 景點 GUIDE
         window.addCustomGuide = async function() {
-            const tag = document.getElementById('guide-tag').value.trim();
-            const title = document.getElementById('guide-title').value.trim();
-            const desc = document.getElementById('guide-desc').value.trim();
-            const tip = document.getElementById('guide-tip').value.trim();
-            if (!title || !desc) return alert("請完整填寫名稱與描述內容");
+            const tag = document.getElementById("guide-tag").value.trim() || "自訂筆記";
+            const title = document.getElementById("guide-title").value.trim();
+            const desc = document.getElementById("guide-desc").value.trim();
+            const tip = document.getElementById("guide-tip").value.trim();
 
-            await addDoc(collection(db, "guides"), { tag, title, desc, tip, createdAt: Date.now() });
-            document.getElementById('guide-tag').value = "";
-            document.getElementById('guide-title').value = "";
-            document.getElementById('guide-desc').value = "";
-            document.getElementById('guide-tip').value = "";
+            if (!title || !desc) return alert("請填寫景點名稱與詳細深度筆記內容！");
+
+            const newGuide = {
+                tag: tag,
+                title: title,
+                desc: desc,
+                tip: tip || "",
+                map: ""
+            };
+
+            await addDoc(collection(db, "guides"), newGuide);
+
+            document.getElementById("guide-tag").value = "";
+            document.getElementById("guide-title").value = "";
+            document.getElementById("guide-desc").value = "";
+            document.getElementById("guide-tip").value = "";
         };
 
         window.deleteGuide = async function(id) {
-            if(id.startsWith('fixed-')) {
-                alert("核心攻略本無法移除！");
-                return;
-            }
-            // 【防呆機制確認】
-            if (confirm("⚠️ 確定要刪除此筆自訂景點深度備忘筆記嗎？")) {
+            if (confirm("確定要刪除此自訂筆記嗎？")) {
                 await deleteDoc(doc(db, "guides", id));
             }
         };
 
-        function renderGuides() {
-            const container = document.getElementById('guide-container');
-            container.innerHTML = "";
-
-            fixedGuides.forEach((data, idx) => {
-                const div = document.createElement('div');
-                div.className = "bg-white p-4 rounded-2xl border border-emerald-100/60 shadow-xs relative space-y-2";
-                div.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <span class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md font-bold">${data.tag}</span>
-                        <a href="${data.map}" target="_blank" class="text-[11px] text-blue-500 hover:underline font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-location-dot text-red-400"></i> 開啟導航 Map
-                        </a>
-                    </div>
-                    <h3 class="text-xs font-bold text-slate-800 border-b border-slate-50 pb-1 text-[13px] flex items-center justify-between">
-                        <span>${data.title}</span>
-                    </h3>
-                    <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">${data.desc}</p>
-                    ${data.tip ? `<div class="bg-amber-50/80 border border-amber-100 text-[11px] text-amber-700 p-2.5 rounded-xl font-medium shadow-2xs">${data.tip}</div>` : ''}
-                `;
-                container.appendChild(div);
-            });
-
-            onSnapshot(query(collection(db, "guides"), orderBy("createdAt", "desc")), (snapshot) => {
-                document.querySelectorAll('.cloud-guide-item').forEach(el => el.remove());
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const div = document.createElement('div');
-                    div.className = "cloud-guide-item bg-white p-4 rounded-2xl border border-indigo-100 shadow-xs relative space-y-2";
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <span class="text-[9px] bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-md font-bold">${data.tag || '自訂備忘'}</span>
-                            <button onclick="deleteGuide('${doc.id}')" class="text-slate-300 hover:text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                        <h3 class="text-xs font-bold text-slate-700">💡 ${data.title}</h3>
-                        <p class="text-xs text-slate-500 leading-relaxed">${data.desc}</p>
-                        ${data.tip ? `<div class="bg-blue-50/60 border border-blue-100 text-[11px] text-blue-700 p-2 rounded-xl">${data.tip}</div>` : ''}
-                    `;
-                    container.appendChild(div);
-                });
-            });
-        }
-
-        // 記帳 WALLET 與【多人自動分帳演算法】
+        // ====== 錢包與分帳計算模組 ======
         window.executeCalc = function() {
-            const expr = document.getElementById('calc-expr').value;
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
+            const fxRate = parseFloat(document.getElementById("fx-rate").value) || 0.212;
+            const expr = document.getElementById("calc-expr").value.trim();
+            if (!expr) return;
+
             try {
-                const totalJpy = Function("\"use strict\"; return (" + expr + ")")();
-                if (typeof totalJpy === 'number' && !isNaN(totalJpy)) {
-                    document.getElementById('calc-jpy').innerText = `¥ ${totalJpy}`;
-                    document.getElementById('calc-twd').innerText = `NT$ ${Math.round(totalJpy * rate)}`;
-                    document.getElementById('expense-amount').value = totalJpy;
+                // 安全過濾算式
+                const sanitized = expr.replace(/[^0-9+\-*/().\s]/g, '');
+                const resJpy = Function(`"use strict"; return (${sanitized})`)();
+                
+                if (typeof resJpy === 'number' && !isNaN(resJpy)) {
+                    document.getElementById("calc-jpy").innerText = `¥ ${Math.round(resJpy).toLocaleString()}`;
+                    document.getElementById("calc-twd").innerText = `NT$ ${Math.round(resJpy * fxRate).toLocaleString()}`;
+                    document.getElementById("expense-amount").value = Math.round(resJpy);
+                } else {
+                    alert("算式不合法！");
                 }
-            } catch(e) { alert("算式錯誤！如: 1200+850"); }
+            } catch (err) {
+                alert("計算錯誤，請檢查算式格式！");
+            }
         };
 
         window.addExpense = async function() {
-            const item = document.getElementById('expense-item').value.trim();
-            const amount = parseFloat(document.getElementById('expense-amount').value);
-            if (!item || isNaN(amount)) return alert("請輸入正確的品項與金額");
+            if (!currentUser) return alert("請先登入成員身分！");
+            const item = document.getElementById("expense-item").value.trim();
+            const amount = parseInt(document.getElementById("expense-amount").value);
 
-            await addDoc(collection(db, "expenses"), { 
-                user: currentUser ? currentUser.name : "未選擇成員", 
-                item, 
-                amount, 
-                createdAt: Date.now() 
-            });
-            document.getElementById('expense-item').value = "";
-            document.getElementById('expense-amount').value = "";
+            if (!item || isNaN(amount) || amount <= 0) return alert("請輸入正確的消費品項與日幣金額！");
+
+            const newExpense = {
+                payerId: currentUser.id,
+                payerName: currentUser.name,
+                item: item,
+                amount: amount,
+                timestamp: Date.now()
+            };
+
+            await addDoc(collection(db, "expenses"), newExpense);
+
+            document.getElementById("expense-item").value = "";
+            document.getElementById("expense-amount").value = "";
         };
 
-        // 即時分帳與平攤計算
-        onSnapshot(query(collection(db, "expenses"), orderBy("createdAt", "desc")), (snapshot) => {
-            const container = document.getElementById('expense-list');
-            container.innerHTML = "";
-            
-            let totalJpy = 0;
-            let paidMap = {}; // 紀錄每個人總共墊付了多少錢
-
-            // 初始化所有快取到的成員名單
-            allUsersCached.forEach(u => paidMap[u] = 0);
-
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                totalJpy += data.amount;
-                
-                if (!paidMap[data.user]) paidMap[data.user] = 0;
-                paidMap[data.user] += data.amount;
-
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center text-xs p-2 bg-slate-50 rounded-xl border border-slate-100/50";
-                div.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold">${data.user}</span>
-                        <span class="text-slate-600 font-medium">${data.item}</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold text-slate-700">¥${data.amount}</span>
-                        <button onclick="deleteExpenseItem('${doc.id}')" class="text-slate-300 hover:text-red-500"><i class="fa-solid fa-xmark text-[10px]"></i></button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-
-            // 更新分帳卡片頂部數據
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-            const activeUserCount = Object.keys(paidMap).length || 1;
-            const avgJpy = Math.round(totalJpy / activeUserCount);
-
-            document.getElementById('split-total-jpy').innerText = `¥ ${totalJpy}`;
-            document.getElementById('split-total-twd').innerText = `NT$ ${Math.round(totalJpy * rate)}`;
-            document.getElementById('split-avg-jpy').innerText = `¥ ${avgJpy} / 人`;
-
-            // 渲染每人墊付明細
-            const detailContainer = document.getElementById('split-users-detail');
-            detailContainer.innerHTML = "";
-            
-            let balances = []; // 用於計算清算機制 [{name, balance}]
-            
-            for(let name in paidMap) {
-                const paid = paidMap[name];
-                const bal = paid - avgJpy; // 正數代表代墊多應拿回，負數代表付太少應拿出來
-                balances.push({ name, bal });
-
-                const p = document.createElement('div');
-                p.className = "flex justify-between items-center bg-slate-600/30 px-2 py-1 rounded-md";
-                p.innerHTML = `
-                    <span>👤 ${name} 已代墊: ¥ ${paid}</span>
-                    <span class="${bal >= 0 ? 'text-emerald-400' : 'text-red-400'} font-bold">
-                        ${bal >= 0 ? '可拿回 ¥ ' + bal : '需補繳 ¥ ' + Math.abs(bal)}
-                    </span>
-                `;
-                detailContainer.appendChild(p);
-            }
-
-            // 多人平攤最優清算分配演算法
-            const planContainer = document.getElementById('split-settlement-plan');
-            planContainer.innerHTML = "";
-            
-            let debtors = balances.filter(x => x.bal < 0).sort((a,b) => a.bal - b.bal); // 欠錢的
-            let creditors = balances.filter(x => x.bal > 0).sort((a,b) => b.bal - a.bal); // 應拿回錢的
-
-            if(debtors.length === 0) {
-                planContainer.innerHTML = `<p class="text-slate-400 text-center text-[10px] py-1">🎉 帳目完全平衡，目前無須找零平攤！</p>`;
-            } else {
-                let i = 0, j = 0;
-                while(i < debtors.length && j < creditors.length) {
-                    let amountNeeded = Math.abs(debtors[i].bal);
-                    let amountAvailable = creditors[j].bal;
-                    let settledAmount = Math.min(amountNeeded, amountAvailable);
-
-                    debtors[i].bal += settledAmount;
-                    creditors[j].bal -= settledAmount;
-
-                    const p = document.createElement('div');
-                    p.className = "flex items-center gap-1 bg-emerald-500/10 p-1 rounded border border-emerald-500/20";
-                    p.innerHTML = `<div>💸 <span class="font-bold text-white">${debtors[i].name}</span> 應給 <span class="font-bold text-amber-300">${creditors[j].name}</span> <span class="text-emerald-300 font-bold">¥ ${Math.round(settledAmount)}</span></div>`;
-                    planContainer.appendChild(p);
-
-                    if(Math.abs(debtors[i].bal) < 1) i++;
-                    if(creditors[j].bal < 1) j++;
-                }
-            }
-        });
-
-        window.deleteExpenseItem = async function(id) {
-            // 【防呆機制確認】
-            if (confirm("⚠️ 確定要刪除此筆花費帳務資料嗎？雲端分帳與平攤金額將會重新精算。")) {
+        window.deleteExpense = async function(id) {
+            if (confirm("確定要刪除這筆消費紀錄嗎？")) {
                 await deleteDoc(doc(db, "expenses", id));
             }
         };
 
         window.clearExpenses = async function() {
-            if (confirm("🚨 警告：確定要清空所有旅伴上傳的雲端記帳歷史明細嗎？")) {
-                alert("為確保安全，請個別點擊 X 按鈕進行手動防呆移除。");
+            if (confirm("⚠️ 注意：這將會清除全團在雲端的所有記帳紀錄，確定清空嗎？")) {
+                alert("為保護資料安全，請由資料庫後台或手動一筆筆刪除明細。");
             }
         };
 
+        function renderExpensesList(expenses) {
+            const container = document.getElementById("expense-list");
+            container.innerHTML = "";
+            expenses.sort((a,b) => b.timestamp - a.timestamp);
 
-        // ====== 行李檢查清單與行前準備 (LocalStorage 本地獨立快取) ======
-        const defaultLists = {
-           pee: = [
-            { text: "線上預辦登機 (星宇航空會員可在登機前 48 小時提前報到)", isUrl: false },
-            { text: "入境前填妥 Visit Japan Web (完成後請截圖儲存 QR code)", isUrl: true, url: "https://www.vjw.digital.go.jp/main/#/vjwplo001" },
-            { text: "投保旅遊平安險與不便險", isUrl: false },
-            { text: "購買並確認 E-sim 完成開卡設定準備", isUrl: false },
-            { text: "兌換日幣現鈔 & 手機綁定全支付 (可掃 PayPay 條碼)", isUrl: false }
-        ];
+            if(expenses.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">目前沒有任何消費明細 💸</p>`;
+                return;
+            }
 
+            expenses.forEach(e => {
+                const div = document.createElement("div");
+                div.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 animate-fade-in";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-400 bg-slate-200/60 px-1.5 py-0.5 rounded text-[10px]">${e.payerName}</span>
+                        <span class="font-semibold text-slate-700">${e.item}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-slate-800">¥ ${e.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense('${e.id}')" class="text-slate-300 hover:text-red-400 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
 
-            carry: [
-                { text: "護照正本", checked: false }, { text: "重要身分證件", checked: false },
-                { text: "信用卡", checked: false }, { text: "日幣現金", checked: false },
-                { text: "台幣現金", checked: false }, { text: "E-SIM 設定資料", checked: false },
-                { text: "行動電源", checked: false }, { text: "雨傘/雨具", checked: false },
-                { text: "登機證", checked: false }, { text: "耳機", checked: false },
-                { text: "手機", checked: false }, { text: "筆 (填寫表單備用)", checked: false },
-                { text: "輕便隨身包包", checked: false }, { text: "衛生紙", checked: false },
-                { text: "隨身水壺", checked: false }, { text: "個人隨身藥品", checked: false }
-            ],
-            check: [
-                { text: "換洗衣物", checked: false }, { text: "內衣褲", checked: false },
-                { text: "睡衣睡褲", checked: false }, { text: "外套", checked: false },
-                { text: "日常保養品", checked: false }, { text: "化妝品", checked: false },
-                { text: "洗面乳", checked: false }, { text: "眼鏡/隱形眼鏡", checked: false },
-                { text: "牙刷、牙膏、牙線", checked: false }, { text: "購物袋", checked: false },
-                { text: "手機充電線 & 充電頭", checked: false }, { text: "鞋子", checked: false },
-                { text: "防護口罩", checked: false }, { text: "棉花棒", checked: false },
-                { text: "美髮梳子", checked: false }, { text: "防曬乳/防曬裝備", checked: false },
-                { text: "洗卸用品", checked: false }, { text: "衛生紙", checked: false },
-                { text: "衛生棉", checked: false }, { text: "濕紙巾", checked: false },
-                { text: "毛巾", checked: false }
-            ]
-        };
-
-        if (!localStorage.getItem("trip_lists_v3_fixed")) {
-            localStorage.setItem("trip_lists_v3_fixed", JSON.stringify(defaultLists));
+            // 重新計算平攤分帳
+            calculateSplits(expenses);
         }
 
-        window.switchListTab = function(subTab) {
-            currentListTab = subTab;
-            document.querySelectorAll('.list-sub-panel').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`list-container-${subTab}`).classList.remove('hidden');
-            
-            document.querySelectorAll('#sec-lists button').forEach(btn => {
-                if(btn.id.startsWith('list-tab-')) {
-                    btn.className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
+        function calculateSplits(expenses = []) {
+            if (allUsersCached.length === 0) return;
+            const fxRate = parseFloat(document.getElementById("fx-rate").value) || 0.212;
+
+            let totalJpy = 0;
+            let userPaidMap = {};
+
+            // 初始化每個人支付 0 元
+            allUsersCached.forEach(u => userPaidMap[u.id] = 0);
+
+            // 統計每人總代墊金額
+            expenses.forEach(e => {
+                totalJpy += e.amount;
+                if (userPaidMap[e.payerId] !== undefined) {
+                    userPaidMap[e.payerId] += e.amount;
                 }
             });
-            document.getElementById(`list-tab-${subTab}`).className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white";
-            renderLocalLists();
+
+            const numUsers = allUsersCached.length;
+            const avgJpy = numUsers > 0 ? (totalJpy / numUsers) : 0;
+
+            document.getElementById("split-total-jpy").innerText = `¥ ${Math.round(totalJpy).toLocaleString()}`;
+            document.getElementById("split-total-twd").innerText = `NT$ ${Math.round(totalJpy * fxRate).toLocaleString()}`;
+            document.getElementById("split-avg-jpy").innerText = `¥ ${Math.round(avgJpy).toLocaleString()}`;
+
+            // 渲染每個人代墊與應付狀態明細
+            const detailsContainer = document.getElementById("split-users-detail");
+            detailsContainer.innerHTML = "";
+
+            let balances = []; // 儲存每個人與平均值的差額
+
+            allUsersCached.forEach(u => {
+                const paid = userPaidMap[u.id] || 0;
+                const net = paid - avgJpy; // 正數代表別人要給他，負數代表他要給別人
+                balances.push({ id: u.id, name: u.name, net: net });
+
+                const div = document.createElement("div");
+                div.className = "flex justify-between text-slate-300";
+                
+                let statusText = "";
+                if (net > 0) statusText = `<span class="text-emerald-400 font-medium">應收 ¥ ${Math.round(net).toLocaleString()}</span>`;
+                else if (net < 0) statusText = `<span class="text-rose-300 font-medium">應付 ¥ ${Math.round(Math.abs(net)).toLocaleString()}</span>`;
+                else statusText = `<span class="text-slate-400">已平攤</span>`;
+
+                div.innerHTML = `<span>${u.name} (已墊 ¥ ${paid.toLocaleString()}):</span> ${statusText}`;
+                detailsContainer.appendChild(div);
+            });
+
+            // 計算最優化分帳平攤導引計畫 (演算法)
+            const planContainer = document.getElementById("split-settlement-plan");
+            planContainer.innerHTML = "";
+
+            let creditors = balances.filter(b => b.net > 0).sort((a,b) => b.net - a.net);
+            let debtors = balances.filter(b => b.net < 0).sort((a,b) => a.net - b.net);
+
+            let planLines = [];
+            let i = 0, j = 0;
+
+            while (i < debtors.length && j < creditors.length) {
+                let debtor = debtors[i];
+                let creditor = creditors[j];
+                
+                let amount = Math.min(Math.abs(debtor.net), creditor.net);
+                if (amount > 0.1) {
+                    planLines.push(`👉 <b>${debtor.name}</b> 應支付給 <b>${creditor.name}</b>：<span class="text-amber-300 font-bold">¥ ${Math.round(amount).toLocaleString()}</span>`);
+                }
+
+                debtor.net += amount;
+                creditor.net -= amount;
+
+                if (Math.abs(debtor.net) < 0.1) i++;
+                if (creditor.net < 0.1) j++;
+            }
+
+            if (planLines.length === 0) {
+                planContainer.innerHTML = `<p class="text-slate-400 text-[10px] italic">目前全團款項完全平攤清算完畢 ✨</p>`;
+            } else {
+                planContainer.innerHTML = planLines.join("<br>");
+            }
+        }
+
+        // ====== 準備清單模組 (含雲端同步狀態) ======
+        window.switchListTab = function(tabName) {
+            currentListTab = tabName;
+            document.querySelectorAll(".list-sub-panel").forEach(p => p.classList.add("hidden"));
+            document.querySelectorAll("#sec-lists .flex button").forEach(b => {
+                b.className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
+            });
+
+            document.getElementById(`list-container-${tabName}`).classList.remove("hidden");
+            document.getElementById(`list-tab-${tabName}`).className = "w-1/3 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white";
         };
 
-        function getLocalData() {
-            return JSON.parse(localStorage.getItem("trip_lists_v3_fixed")) || defaultLists;
-        }
+        async function renderChecklists(cloudListData) {
+            // 三個主要面板
+            ['pre', 'carry', 'check'].forEach(tab => {
+                const panel = document.getElementById(`list-container-${tab}`);
+                panel.innerHTML = "";
 
-        function saveLocalData(data) {
-            localStorage.setItem("trip_lists_v3_fixed", JSON.stringify(data));
-        }
+                // 合併預設靜態項目和雲端現有項目
+                const defaultItems = defaultChecklist[tab] || [];
+                const cloudDoc = cloudListData[tab] || {};
+                const cloudItems = cloudDoc.items || [];
 
-        function renderLocalLists() {
-            const data = getLocalData();
-            const tabs = ['pre', 'carry', 'check'];
-            
-            tabs.forEach(tab => {
-                const container = document.getElementById(`list-container-${tab}`);
-                if (!container) return;
-                container.innerHTML = "";
-                
-                const listItems = data[tab] || [];
-                listItems.forEach((item, index) => {
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl transition";
+                // 以 id 作為唯一的 Key，整合成最終列表
+                let finalItems = [...defaultItems];
+                cloudItems.forEach(ci => {
+                    const idx = finalItems.findIndex(f => f.id === ci.id);
+                    if (idx >= 0) {
+                        finalItems[idx].checked = ci.checked; // 雲端狀態覆蓋預設值
+                    } else {
+                        finalItems.push(ci); // 自訂擴充項目
+                    }
+                });
+
+                if (finalItems.length === 0) {
+                    panel.innerHTML = `<p class="text-slate-400 text-center text-xs py-4">分類裡空空如也 📦</p>`;
+                    return;
+                }
+
+                finalItems.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "flex items-center justify-between py-1.5 border-b border-slate-50 text-xs group animate-fade-in";
+                    
                     div.innerHTML = `
-                        <label class="flex items-center space-x-2.5 flex-1 cursor-pointer">
-                            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleLocalItem('${tab}', ${index})" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-3.5 h-3.5">
-                            <span class="text-xs font-medium ${item.checked ? 'line-through text-slate-300' : 'text-slate-600'}">${item.text}</span>
+                        <label class="flex items-center space-x-2.5 cursor-pointer text-slate-600 font-medium select-none flex-1">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} 
+                                onclick="toggleChecklistItem('${tab}', '${item.id}', this.checked)"
+                                class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 transition w-4 h-4">
+                            <span class="${item.checked ? 'line-through text-slate-300' : ''}">${item.text}</span>
                         </label>
-                        <button onclick="deleteLocalItem('${tab}', ${index})" class="text-slate-300 hover:text-red-400 p-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                        ${item.id.startsWith("custom_") ? `<button onclick="deleteChecklistItem('${tab}', '${item.id}')" class="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-xmark text-[10px]"></i></button>` : ''}
                     `;
-                    container.appendChild(div);
+                    panel.appendChild(div);
                 });
             });
         }
 
-        window.toggleLocalItem = function(tab, index) {
-            const data = getLocalData();
-            if(data[tab] && data[tab][index]) {
-                data[tab][index].checked = !data[tab][index].checked;
-                saveLocalData(data);
-                renderLocalLists();
+        window.toggleChecklistItem = async function(tab, itemId, isChecked) {
+            // 先取得目前雲端完整的項目
+            const listRef = doc(db, "checklists", tab);
+            const defaultItems = defaultChecklist[tab] || [];
+            
+            // 監聽快取拿最新的一份整合
+            let currentCloudItems = [];
+            if (allUsersCached.length > 0) {
+                // 從畫面元素反向或直接向資料庫塞
             }
-        };
 
-        // 【清單物品刪除防呆機制】
-        window.deleteLocalItem = function(tab, index) {
-            const data = getLocalData();
-            if(data[tab] && data[tab][index]) {
-                const targetText = data[tab][index].text;
-                // 執行彈窗提示確認
-                if (confirm(`⚠️ 防呆提醒：確定要從清單中永久移除「${targetText}」嗎？`)) {
-                    data[tab].splice(index, 1);
-                    saveLocalData(data);
-                    renderLocalLists();
+            // 安全做法：重新讀取或包裝更新
+            const panel = document.getElementById(`list-container-${tab}`);
+            // 直接組成最終陣列送給 Firebase setDoc
+            let updatedItems = [];
+            // 遍歷當前 UI 收集狀態
+            const cloudListData = {};
+            
+            // 更簡單直覺的作法：直接更新雲端快取
+            // 透過畫面渲染最精確，此處使用精準動態讀取覆蓋
+            let listDocSnapshot = [];
+            // 為了不拖延速度，我們直接從現有的 DOM 組合最新陣列
+            const checkboxes = panel.querySelectorAll("input[type='checkbox']");
+            const spans = panel.querySelectorAll("span");
+            const buttons = panel.querySelectorAll("button");
+
+            // 重新組裝
+            const finalArray = [];
+            // 採取直接讀取並修改雲端欄位
+            // 我們利用內建方法，把新狀態寫入雲端
+            // 1. 取得舊資料
+            let itemsToUpload = [];
+            
+            // 為了最穩定的更新，我們動態整合
+            const savedItems = [];
+            // 讀取 UI
+            panel.querySelectorAll("label").forEach(lbl => {
+                const cb = lbl.querySelector("input");
+                const txt = lbl.querySelector("span").innerText;
+                // 找出 itemId
+                const onclickStr = cb.getAttribute("onclick");
+                if (onclickStr.includes(`'${itemId}'`)) {
+                    cb.checked = isChecked;
                 }
-            }
+            });
+
+            // 重新打包上傳
+            panel.querySelectorAll("label").forEach(lbl => {
+                const cb = lbl.querySelector("input");
+                const txt = lbl.querySelector("span").innerText;
+                const onclickStr = cb.getAttribute("onclick");
+                // 擷取 id
+                const matchedId = onclickStr.split("'")[3];
+                finalArray.push({
+                    id: matchedId,
+                    text: txt,
+                    checked: matchedId === itemId ? isChecked : cb.checked
+                });
+            });
+
+            await setDoc(doc(db, "checklists", tab), { items: finalArray });
         };
 
-        window.addCustomChecklistItem = function() {
-            const input = document.getElementById('custom-item-text');
-            const text = input.value.trim();
-            if (!text) return alert("請輸入準備項目內容");
+        window.addCustomChecklistItem = async function() {
+            const text = document.getElementById("custom-item-text").value.trim();
+            if (!text) return alert("請輸入項目名稱！");
 
-            const data = getLocalData();
-            if(!data[currentListTab]) data[currentListTab] = [];
-            data[currentListTab].push({ text: text, checked: false });
-            saveLocalData(data);
-            input.value = "";
-            renderLocalLists();
+            const tab = currentListTab;
+            const panel = document.getElementById(`list-container-${tab}`);
+            
+            const finalArray = [];
+            panel.querySelectorAll("label").forEach(lbl => {
+                const cb = lbl.querySelector("input");
+                const txt = lbl.querySelector("span").innerText;
+                const onclickStr = cb.getAttribute("onclick");
+                const matchedId = onclickStr.split("'")[3];
+                finalArray.push({ id: matchedId, text: txt, checked: cb.checked });
+            });
+
+            // 新增自訂項目
+            finalArray.push({
+                id: "custom_" + Date.now(),
+                text: text,
+                checked: false
+            });
+
+            await setDoc(doc(db, "checklists", tab), { items: finalArray });
+            document.getElementById("custom-item-text").value = "";
         };
 
-        // 【直接導出清單文字功能】
+        window.deleteChecklistItem = async function(tab, itemId) {
+            if(!confirm("確定要刪除這個自訂清單項目嗎？")) return;
+            const panel = document.getElementById(`list-container-${tab}`);
+            
+            const finalArray = [];
+            panel.querySelectorAll("label").forEach(lbl => {
+                const cb = lbl.querySelector("input");
+                const txt = lbl.querySelector("span").innerText;
+                const onclickStr = cb.getAttribute("onclick");
+                const matchedId = onclickStr.split("'")[3];
+                if (matchedId !== itemId) {
+                    finalArray.push({ id: matchedId, text: txt, checked: cb.checked });
+                }
+            });
+
+            await setDoc(doc(db, "checklists", tab), { items: finalArray });
+        };
+
         window.exportChecklistToText = function() {
-            const data = getLocalData();
             let textOutput = "📋 【京阪神奈自由行】準備清單備份導出\n\n";
             
-            textOutput += "▼ 1. 行前準備 & 提醒：\n";
-            data.pre.forEach(i => textOutput += ` [${i.checked ? 'X' : ' '}] ${i.text}\n`);
-            
-            textOutput += "\n▼ 2. 隨身行李（必備）：\n";
-            data.carry.forEach(i => textOutput += ` [${i.checked ? 'X' : ' '}] ${i.text}\n`);
-            
-            textOutput += "\n▼ 3. 託運行李清單：\n";
-            data.check.forEach(i => textOutput += ` [${i.checked ? 'X' : ' '}] ${i.text}\n`);
+            ['pre', 'carry', 'check'].forEach(tab => {
+                const titles = { pre: "▼ 1. 行前準備 & 提醒：", carry: "▼ 2. 隨身行李（必備）：", check: "▼ 3. 託運行李清單：" };
+                textOutput += titles[tab] + "\n";
+                
+                const panel = document.getElementById(`list-container-${tab}`);
+                panel.querySelectorAll("label").forEach(lbl => {
+                    const cb = lbl.querySelector("input");
+                    const txt = lbl.querySelector("span").innerText;
+                    textOutput += ` [${cb.checked ? 'X' : ' '}] ${txt}\n`;
+                });
+                textOutput += "\n";
+            });
 
             navigator.clipboard.writeText(textOutput).then(() => {
-                alert("✅ 成功導出！完整清單內容已自動複製到您的手機剪貼簿，可直接貼到 LINE 備份或分享。");
-            }).catch(err => {
-                alert("複製失敗，請手動全選複製。");
+                alert("📋 複製成功！完整文字清單已複製至您的剪貼簿，可直接貼到 LINE 記事本或備忘錄中保存。");
+            }).catch(() => {
+                alert("複製失敗，請手動複製文字。");
             });
         };
 
-        // 頁面初始化
-        switchDay(1);
-        renderGuides();
-        renderLocalLists();
+        // ====== 總分頁切換功能 ======
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('nav button').forEach(el => {
+                el.classList.remove('text-emerald-500');
+                el.classList.add('text-slate-400');
+            });
+            document.getElementById(`nav-${tabId}`).classList.remove('text-slate-400');
+            document.getElementById(`nav-${tabId}`).classList.add('text-emerald-500');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // 頁面加載完成後啟動
+        window.addEventListener("DOMContentLoaded", initApp);
     </script>
 </body>
 </html>
