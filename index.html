@@ -389,54 +389,54 @@
         let currentLoadedPlans = []; 
 
         // 核心預設行程：100% 完整保留您原本的資料
-       const fixedItinerary = {
+        const fixedItinerary = {
             1: [
                 { time: "06:30", title: "第一航廈集合", desc: "準備搭乘星宇航空，確認手提行李無違禁品。" },
                 { time: "11:45", title: "抵達 Kobe Airport Terminal 2", desc: "抵達神戶機場，辦理入境並提取行李。" },
                 { time: "13:15", title: "抵達 JR 三宮站", desc: "經由港灣人工島線轉乘至JR三宮站，準備前往大阪。" },
                 { time: "14:13", title: "抵達 鶴橋站", desc: "轉乘至鶴橋，直奔下榻飯店放行李。" },
-                { time: "14:27", title: "放行李：ESLEAD酒店-大阪鵲橋", desc: "辦理 Check-in 或寄放行李，稍作休息。", map: "https://maps.app.goo.gl/HnqWfBSkEb15QSKAA" },
-                { time: "15:08", title: "景點：大阪城", desc: "參觀天守閣，欣賞宏偉護城河與歷史古蹟。", map: "https://maps.app.goo.gl/bk6sF3Eq4m5xGps47" },
-                { time: "17:08", title: "景點：Detective Conan Bronze Statue", desc: "尋找讀賣電視台前的大盤名偵探柯南銅像打卡拍照！", map: "https://maps.app.goo.gl/s2CEegTQVXUUY9it6" },
-                { time: "17:55", title: "逛街：心齋橋筋商店街", desc: "藥妝、服飾主戰場，店鋪極多極好逛。", map: "https://maps.app.goo.gl/h9XD2NFcYwPwtf8o6" },
-                { time: "18:59", title: "打卡：道頓堀固力果跑跑人", desc: "必拍道頓堀固力果跑跑人霓虹看板，晚餐可在此街享用。", map: "https://maps.app.goo.gl/NZXN7s6UUUB81EhL8" },
+                { time: "14:27", title: "下榻放行李：ESLEAD酒店-大阪鵲橋", desc: "辦理 Check-in 或寄放行李，稍作休息。", map: "https://www.eslead-hotel.com/zh-HK/tsuruhashi/" },
+                { time: "15:08", title: "景點：大阪城", desc: "參觀天守閣，欣賞宏偉護城河與歷史古蹟。", map: "https://maps.google.com" },
+                { time: "17:08", title: "景點：Detective Conan Bronze Statue", desc: "尋找讀賣電視台前的大盤名偵探柯南銅像打卡拍照！", map: "https://maps.google.com" },
+                { time: "17:55", title: "逛街：心齋橋筋商店街", desc: "藥妝、服飾主戰場，店鋪極多極好逛。", map: "https://maps.google.com" },
+                { time: "18:59", title: "打卡：Glico Sign Dotonbori", desc: "必拍道頓堀固力果跑跑人霓虹看板，晚餐可在此街享用。", map: "https://maps.google.com" },
                 { time: "20:18", title: "返回飯店休息", desc: "返回 ESLEAD酒店-大阪鵲橋，養精蓄銳。" }
             ],
             2: [
                 { time: "07:30", title: "飯店出發", desc: "自 ESLEAD酒店 準時出發前往京都。" },
-                { time: "08:40", title: "景點：伏見稻荷大社", desc: "參拜千本鳥居，建議晨間光線拍攝最美、人潮較少。", map: "https://maps.app.goo.gl/1Y56XMukrs4FVpUU8" },
-                { time: "11:00", title: "美食：錦市場", desc: "京都的廚房！享用章魚蛋、串燒、玉子燒等在地京小吃。", map: "https://maps.app.goo.gl/W7HdtPe4moe6Jzfg9" },
-                { time: "13:00", title: "景點：清水寺", desc: "漫步清水舞台、二三年坂、地主神社，體驗古都風情。", map: "https://maps.app.goo.gl/KUngd8mWg7Ay6mU89" },
-                { time: "16:00", title: "景點：祇園", desc: "京都傳統繁華街區，街廓古色古香。", map: "https://maps.app.goo.gl/9mghBZdMnZx9Kspa8" },
-                { time: "16:40", title: "景點：花見小路通", desc: "保存良好的茶屋街道，有機會與趕場的藝妓擦身而過。", map: "https://maps.app.goo.gl/bvs1RSbfJHbRmLy6A" },
+                { time: "08:40", title: "景點：伏見稻荷大社", desc: "參拜千本鳥居，建議晨間光線拍攝最美、人潮較少。", map: "https://maps.google.com" },
+                { time: "11:00", title: "美食：錦市場", desc: "京都的廚房！享用章魚蛋、串燒、玉子燒等在地京小吃。", map: "https://maps.google.com" },
+                { time: "13:00", title: "景點：清水寺", desc: "漫步清水舞台、二三年坂、地主神社，體驗古都風情。", map: "https://maps.google.com" },
+                { time: "16:00", title: "景點：祇園", desc: "京都傳統繁華街區，街廓古色古香。", map: "https://maps.google.com" },
+                { time: "16:40", title: "景點：花見小路通", desc: "保存良好的茶屋街道，有機會與趕場的藝妓擦身而過。", map: "https://maps.google.com" },
                 { time: "18:30", title: "晚餐：空蟬亭", desc: "享用極致熟成炸豬排美食，記得提前預約。" },
                 { time: "22:17", title: "返回飯店", desc: "返回 ESLEAD酒店-大阪鵲橋 休息。" }
             ],
             3: [
                 { time: "07:00", title: "飯店出發", desc: "提早出發搶攻環球影城開園黃金時間！" },
-                { time: "07:38", title: "夢幻樂園：日本環球影城 (USJ)", desc: "暢玩超級任天堂世界、哈利波特禁忌之旅！", map: "https://maps.app.goo.gl/fk9ZpxAEZnay3TDf6" },
+                { time: "07:38", title: "夢幻樂園：日本環球影城 (USJ)", desc: "暢玩超級任天堂世界、哈利波特禁忌之旅！", map: "https://maps.google.com" },
                 { time: "20:30", title: "晚餐：燒肉力丸 難波道頓堀店", desc: "痛快享用單點吃到飽日式燒肉，補充整天消耗的體力。" },
                 { time: "21:25", title: "返回飯店", desc: "返回 ESLEAD酒店-大阪鵲橋。" }
             ],
             4: [
                 { time: "08:00", title: "飯店退房出發", desc: "收拾完整行李退房，準備前往奈良。" },
-                { time: "09:20", title: "景點：奈良公園", desc: "與野生小鹿近距離互動、餵食鹿仙貝（小心屁股被咬）。", map: "https://maps.app.goo.gl/mL4StakMPTLHAAZZ7" },
-                { time: "11:00", title: "景點：東大寺", desc: "世界最大木造建築，參拜壯觀的奈良大佛並挑戰鑽柱子。", map: "https://maps.app.goo.gl/GzG5885TEDteuc7i7" },
+                { time: "09:20", title: "景點：奈良公園", desc: "與野生小鹿近距離互動、餵食鹿仙貝（小心屁股被咬）。", map: "https://maps.google.com" },
+                { time: "11:00", title: "景點：Tōdai-ji 東大寺", desc: "世界最大木造建築，參拜壯觀的奈良大佛並挑戰鑽柱子。", map: "https://maps.google.com" },
                 { time: "11:51", title: "交通：近鐵奈良站", desc: "返回車站搭車，準備回到大阪市區周邊景點。" },
-                { time: "14:00", title: "景點：通天閣", desc: "走訪新世界老街，可體驗通天閣巨大溜滑梯，吃新世界串炸。", map: "https://maps.app.goo.gl/N2XpmqgHUGNpLbqY9" },
+                { time: "14:00", title: "景點：通天閣", desc: "走訪新世界老街，可體驗通天閣巨大溜滑梯，吃新世界串炸。", map: "https://maps.google.com" },
                 { time: "16:30", title: "飯店取行李", desc: "回到 ESLEAD酒店-大阪鵲橋 提取寄放的行李，移動往神戶。" },
-                { time: "18:00", title: "放行李：Villa Fontaine 神戶三宮", desc: "辦理 Check-In 入住，今晚住在浪漫的神戶。", map: "https://maps.app.goo.gl/Yy1fV1ZoYvmpJsVc6" },
-                { time: "19:30", title: "景點：Mosaic Big Ferris Wheel", desc: "搭乘馬賽克廣場摩天輪，眺望神戶港絢麗港景。", map: "https://maps.app.goo.gl/2JQLTaiMBQg4ZLn89m" },
-                { time: "20:45", title: "景點：神戶港塔", desc: "欣賞神戶地標「紅色鼓狀」夜間燈光秀。", map: "https://maps.app.goo.gl/1FgKVJovUJCAicHn6" },
+                { time: "18:00", title: "下榻放行李：Villa Fontaine 神戶三宮", desc: "辦理 Check-In 入住，今晚住在浪漫的神戶。", map: "https://www.hvf.jp/chi/kobe-sannomiya/room/detail_200.html" },
+                { time: "19:30", title: "景點：Mosaic Big Ferris Wheel", desc: "搭乘馬賽克廣場摩天輪，眺望神戶港絢麗港景。", map: "https://maps.google.com" },
+                { time: "20:45", title: "景點：神戶港塔", desc: "欣賞神戶地標「紅色鼓狀」夜間燈光秀。", map: "https://maps.google.com" },
                 { time: "21:05", title: "返回飯店", desc: "返回 ホテルヴィラフォンテーヌ神戶三宮 休息。" }
             ],
             5: [
                 { time: "08:00", title: "飯店出發", desc: "今日主攻神戶及姬路經典大景點。" },
-                { time: "09:30", title: "古蹟：姬路城", desc: "日本第一名城、世界文化遺產「白鷺城」，白牆極其震撼。", map: "https://maps.app.goo.gl/hpyjmjKJG9nureME7" },
-                { time: "13:00", title: "景點/美食：南京町 & 元町商店街", desc: "走訪神戶中華街與充滿洋式復古質感的元町商店街逛街。", map: "https://maps.app.goo.gl/mswZT8Lc1qbaYtQV6" },
-                { time: "14:50", title: "景點：神戶北野異人館街", desc: "參觀風見雞館、萌黃之館，感受濃郁的歐洲異國街道風情。", map: "https://maps.app.goo.gl/RcSnbybGCnU5dBoX8" },
+                { time: "09:30", title: "古蹟：姬路城", desc: "日本第一名城、世界文化遺產「白鷺城」，白牆極其震撼。", map: "https://maps.google.com" },
+                { time: "13:00", title: "景點/美食：南京町 & 元町商店街", desc: "走訪神戶中華街與充滿洋式復古質感的元町商店街逛街。", map: "https://maps.google.com" },
+                { time: "14:50", title: "景點：神戶北野異人館街", desc: "參觀風見雞館、萌黃之館，感受濃郁的歐洲異國街道風情。", map: "https://maps.google.com" },
                 { time: "17:50", title: "交通：摩耶山展望台", desc: "搭乘纜車上山，準備迎接日本三大百萬夜景。" },
-                { time: "18:15", title: "璀璨夜景：摩耶山掬星台", desc: "飽覽「百萬黃金神戶港夜景」，夜間山上偏冷需準備外套。", map: "https://maps.app.goo.gl/nmLRWLwBM323aScM7" },
+                { time: "18:15", title: "璀璨夜景：摩耶山掬星台", desc: "飽覽「百萬黃金神戶港夜景」，夜間山上偏冷需準備外套。", map: "https://maps.google.com" },
                 { time: "20:30", title: "晚餐：神戶牛排美食饗宴", desc: "在三宮市區挑選道地神戶牛排餐廳，慶祝神戶之夜。" },
                 { time: "22:00", title: "返回飯店", desc: "返回 Villa Fontaine 神戶三宮 休息。" }
             ],
@@ -445,10 +445,9 @@
                 { time: "09:15", title: "神戶三宮最後採買", desc: "把握最後一小時選購神戶限定伴手禮（如生巧克力、布丁）。" },
                 { time: "10:00", title: "搭乘神戶新交通港灣人工島線", desc: "從三宮站直達神戶機場站，車程約18分鐘。" },
                 { time: "10:25", title: "抵達神戶機場 (UKB)", desc: "抵達機場航廈，準備前往星宇航空櫃檯辦理登機。" },
-                { time: "11:40", title: "星宇航空起飛返台", desc: "再見關西！搭機返回桃園國際機場，結束美好旅程。" }
+                { time: "11:40", title: "星宇航空起飛返台", desc: "珍重再見關西！搭機返回桃園國際機場，結束美好旅程。" }
             ]
         };
-
 
         // 綁定表單切換監聽
         document.getElementById('plan-type').addEventListener('change', (e) => {
@@ -798,27 +797,9 @@
             const container = document.getElementById('guide-container');
             container.innerHTML = '';
             const fixed = [
-                   { tag: "大阪 // 戰國史跡", title: "大阪城", map: "https://maps.app.goo.gl/bk6sF3Eq4m5xGps47", desc: "日本三名城之一，天守閣內展示大量豐臣秀吉歷史文物。護城河及巨石城牆非常壯觀。\n● 玩法：搭乘電梯或步行上天守閣展望台鳥瞰大阪市區景致。\n● 建議花費：純逛公園免費；天守閣門票 成人¥1,200。", tip: "💡 注意：天守閣下午 4:30 停止入場，建議提早抵達。" },
-            { tag: "大阪 // 動漫打卡", title: "名偵探柯南銅像 (Detective Conan Bronze Statue)", map: "https://maps.app.goo.gl/s2CEegTQVXUUY9it6", desc: "位於讀賣電視台大樓前方，有柯南、少年偵探團以及毛利小五郎的精緻青銅雕像，是柯南迷必朝聖打卡點！\n● 玩法：與柯南擺出經典的『真相只有一個』姿勢合照。\n● 建議花費：免費參觀。", tip: "💡 小撇步：電視台內部一樓大廳偶爾也有動漫相關佈置，可以順道入內探訪。" },
-            { tag: "大阪 // 購物天堂", title: "心齋橋筋商店街", map: "https://maps.app.goo.gl/h9XD2NFcYwPwtf8o6", desc: "大阪最代表性的長形拱廊商店街，聚集各大藥妝店、UNIQLO、GU 以及各式潮流服飾與小吃。\n● 玩法：瘋狂貨比三家買藥妝，記得準備好優惠券與護照辦理免稅。\n● 建議花費：依個人購物預算而定，藥妝消費滿 ¥5000 可免稅。", tip: "💡 提示：下午至晚上人潮極度擁擠，顧好隨身財物。" },
-            { tag: "大阪 // 經典地標", title: "道頓堀固力果跑跑人 (Glico Sign)", map: "https://maps.app.goo.gl/NZXN7s6UUUB81EhL8", desc: "戎橋旁的巨大固力果跑跑人看板是大阪的代名詞，周邊滿是立體誇張招牌（蟹道樂、章魚燒）。\n● 玩法：在戎橋上與跑跑人單腳舉手合影，並品嚐章魚燒與大阪燒。\n● 建議花費：街區免費；小吃每份約 ¥600 - ¥1000。", tip: "💡 最佳拍照點：過橋到河岸下方走道，由下往上拍人像最不容易被路人擋住。" },
-            { tag: "京都 // 神社", title: "伏見稻荷大社", map: "https://maps.app.goo.gl/1Y56XMukrs4FVpUU8", desc: "以漫延整座山頭的「千本鳥居」聞名，供奉商業與農業之神狐狸使者。\n● 玩法：沿著紅色鳥居隧道步行慢遊，購買狐狸繪馬寫下心願。\n● 建議花費：免費入內。", tip: "💡 注意事項：想拍空景務必像我們一樣排在 8:30 前抵達，否則人潮會非常驚人！" },
-            { tag: "京都 // 京都廚房", title: "錦市場", map: "https://maps.app.goo.gl/W7HdtPe4moe6Jzfg9", desc: "擁有數百年歷史的傳統市場，街道上方有彩色玻璃頂棚，齊聚上百家京料理食材與特色小吃店。\n● 綜合玩法：邊走邊看（但不可邊走邊吃！要站在店家規定區域吃完），必吃豆乳甜甜圈、章魚鵪鶉蛋串、現烤海鮮。\n● 建議花費：小吃每樣 ¥300 - ¥800 不等。", tip: "💡 提醒：這裡嚴禁邊走邊吃，垃圾請直接丟在購買店家的垃圾桶中。" },
-            { tag: "京都 // 世界遺產", title: "清水寺", map: "https://maps.app.goo.gl/KUngd8mWg7Ay6mU89", desc: "京都最古老的寺院，全殿不費一根釘子、全木造的「清水舞台」懸空建於懸崖上，極其震撼。\n● 玩法：參拜大殿、至音羽瀑布飲用泉水（健康、學業、戀愛三選一），隨後順遊二三年坂古街。\n● 建議花費：門票 ¥400。", tip: "💡 散策提示：沿途石階梯較多，務必穿著最好走的鞋子。" },
-            { tag: "京都 // 傳統街廓", title: "祇園", map: "https://maps.app.goo.gl/9mghBZdMnZx9Kspa8", desc: "京都最具代表性的花街，以傳統木造格子窗建築「町家」為特色，充滿濃濃的江戶風情。\n● 玩法：黃昏時分漫步，感受古都華燈初上的神祕浪漫氛圍。\n● 建議花費：免費散步。", tip: "💡 規記：請勿任意拉扯或強行拍攝路過的藝妓，保持禮貌距離。" },
-            { tag: "京都 // 花街小巷", title: "花見小路通", map: "https://maps.app.goo.gl/bvs1RSbfJHbRmLy6A", desc: "祇園精華區域，街道由石板鋪成，兩旁盡是高級料亭與茶屋，是京都高檔文化的象徵。\n● 玩法：欣賞傳統高雅的日式建築門面，體驗靜謐的歷史感。\n● 建議花費：免門票；若在此用餐費用極高。", tip: "💡 嚴格禁止：部分私人巷弄有禁止拍照告示，違者會罰款 ¥10000，請復加留意路標！" },
-            { tag: "大阪 // 夢幻樂園", title: "日本環球影城 (USJ)", map: "https://maps.app.goo.gl/fk9ZpxAEZnay3TDf6", desc: "世界級主題樂園！最新「超級任天堂世界」與經典「哈利波特」是必衝園區。\n● 核心玩法：開園立刻衝任天堂園區保證入園，或提前買好快速通關。必玩馬利歐賽車與禁忌之旅。\n● 建議花費：門票約 ¥8600 - ¥10400 (依日期波動)。", tip: "💡 超重要：出發前務必下載 USJ 官方 APP，進園第一時間搶當天熱門園區的保存券 (整理券)。" },
-            { tag: "奈良 // 神之使者", title: "奈良公園", map: "https://maps.app.goo.gl/mL4StakMPTLHAAZZ7", desc: "擁有上千隻野生梅花鹿的巨大自然公園，這裡的鹿被視為神的使者，聰明且熱情。\n● 玩法：向攤販購買鹿仙貝，對小鹿點頭敬禮，牠們也會對你鞠躬回禮喔！\n● 建議花費：公園免費；鹿仙貝每份 ¥200。", tip: "💡 警告：若手上拿著仙貝卻故意不給，可能會被鹿頂撞、咬衣服或撞屁股，請速戰速決！" },
-            { tag: "奈良 // 木造之巔", title: "東大寺 (Tōdai-ji)", map: "https://maps.app.goo.gl/GzG5885TEDteuc7i7", desc: "距今千年以上歷史，其大佛殿為全世界現存最大的木造建築，殿內高達 15 公尺的盧舍那大佛令人屏息。\n● 玩法：參拜大佛，並嘗試挑戰穿過殿內柱子底部的「大佛鼻孔」巨洞（傳說穿過能保平安）。\n● 建議花費：大佛殿門票 ¥600。", tip: "💡 提示：東大寺外圍的鹿群相對溫和，適合合照。" },
-            { tag: "大阪 // 炸串文化", title: "通天閣 & 新世界", map: "https://maps.app.goo.gl/N2XpmqgHUGNpLbqY9", desc: "充滿昭和復古感的老街區，通天閣頂端有幸運之神 Billiken 雕像，近年新增了刺激的巨型透明滑梯。\n● 玩法：拍下街區華麗誇張的河豚大燈籠，上通天閣俯瞰，晚餐吃在地著名的元祖串炸。\n● 建議花費：通天閣展望台 ¥900；巨型溜滑梯體驗 ¥1000。", tip: "💡 小建議：通天閣塔頂溜滑梯速度極快、非常刺激，心臟病或易頭暈者請衡量。" },
-            { tag: "神戶 // 港灣浪漫", title: "馬賽克摩天輪 (Mosaic Ferris Wheel)", map: "https://maps.app.goo.gl/2JQLTaiMBQg4ZLn89", desc: "位於神戶港港灣人工島 Mosaic 廣場旁，隨著大摩天輪緩緩上升，神戶港、六甲山與明石海峽大橋的立體夜景盡收眼底。\n● 玩法：情侶約會必排，夜晚車廂會有繽紛的發光動畫，從車廂拍向神戶港塔視角絕佳。\n● 建議花費：摩天輪搭乘費 ¥800/人。", tip: "💡 拍點：摩天輪下方也是拍攝神戶港夜景建築群的一線極佳角度。" },
-            { tag: "神戶 // 地標建築", title: "神戶港塔 (Kobe Port Tower)", map: "https://maps.app.goo.gl/1FgKVJovUJCAicHn6", desc: "世界首創管狀網目結構的紅高塔，被譽為「鋼鐵美女」。設有高空透明步道與 360 度旋轉咖啡廳。\n● 玩法：在港邊拍攝其與海洋博物館交織的絢麗燈光秀，亦可購票上塔觀景。\n● 建議花費：純外觀欣賞免費；登塔展望層門票約 ¥1000。", tip: "💡 亮點：神戶港塔夜間點燈非常唯美，是神戶最著名的地標風景。" },
-            { tag: "神戶 // 世界遺產", title: "姬路城 (白鷺城)", map: "https://maps.app.goo.gl/hpyjmjKJG9nureME7", desc: "日本保存最完好的江戶時代城郭，由於外牆通體雪白，形態優美如白鷺展翅，為日本第一國寶。\n● 玩法：沿著迂迴防禦城道登天守閣，欣賞全木造卡榫樑柱結構，極致震撼。\n● 建議花費：門票 ¥1000。", tip: "💡 備註：從神戶三宮搭乘火車前往約 40-50 分鐘，大天守閣內樓梯極陡，需脫鞋攀爬。" },
-            { tag: "神戶 // 洋式購物", title: "元町商店街 & 南京町", map: "https://maps.app.goo.gl/mswZT8Lc1qbaYtQV6", desc: "元町商店街林立眾多百年歐風老店與咖啡廳，質感沉穩；緊鄰的「南京町」則是關西著名中華街。\n● 玩法：在元町喝下午茶買神戶風月堂洋菓子，再去南京町吃老祥記豚饅。\n● 建議花費：小吃零錢價約 ¥200 - ¥500。", tip: "💡 提示：南京町假日人潮洶湧，購買排隊名店小吃要有排隊心理準備。" },
-            { tag: "神戶 // 異國風情", title: "神戶北野異人館街", map: "https://maps.app.goo.gl/RcSnbybGCnU5dBoX8", desc: "明治開港時期外國領事與商人的精緻洋房聚落，依山而建，街道充滿歐洲小鎮風情。\n● 玩法：漫步斜坡古街，參觀指標性的「風見雞館」與「萌黃之館」，並朝盛全日本最美的星巴克北野異人館店。\n● 建議花費：街區散步免費；部分異人館內部參觀門票 ¥300 - ¥500 不等。", tip: "💡 穿著：整區都是連續陡坡，請務必著舒適好走的運動鞋。" },
-            { tag: "神戶 // 百萬夜景", title: "摩耶山掬星台", map: "https://maps.app.goo.gl/nmLRWLwBM323aScM7", desc: "日本三大夜景之一！意指這裡的夜景璀璨閃耀，猶如「用手即可舀起漫天繁星」般夢幻。\n● 玩法：搭乘摩耶登山纜車與高空纜車 (Maya Viewline) 攻頂，眺望整個大阪灣無敵星河夜景。\n● 建議花費：纜車來回票約 ¥1560。", tip: "💡 重大警告：山上體感溫度比平地低 5-10 度，即使是 6 月夜晚也**非常寒冷、風極大**，務必攜帶防風外套！並注意下山末班纜車時間。" }
-        ];
-
+                { tag: "Kobe // 機場聯絡", title: "神戶機場新交通港灣人工島線", desc: "從三宮站直達神戶機場站，車程約18分鐘，班次密集。是從神戶機場進出市區最便利的軌道交通系統。" },
+                { tag: "Osaka // 歷史地標", title: "大阪城天守閣", desc: "由豐臣秀吉始建，現存建築為近代重建。內部為歷史博物館，頂層展望台可眺望大阪市景，周邊公園四季皆美。" },
+                { tag: "Kyoto // 千本鳥居", title: "伏見稻荷大社", desc: "日本全國稻荷神社的總本宮，以無數座朱紅色的「千本鳥居」聞名遐邇。參拜沿稻荷山綿延，極具神祕感與歷史氛圍。" }
             ];
             const all = [...fixed, ...customs];
             all.forEach(g => {
@@ -1005,12 +986,21 @@
             else planBox.innerHTML = plans.join("<br>");
         }
 
-        // 行李預設靜態列表
-        const defaultChecklist = {
-            carry: ["護照", "證件", "信用卡", "日幣", "台幣", "E-SIM", "行動電源", "雨傘", "登機證", "耳機", "手機", "筆", "輕便包包", "衛生紙", "水壺", "個人藥品"],
-            check: ["換洗衣物", "內衣褲", "睡衣睡褲", "外套", "保養品", "化妝品", "洗面乳", "眼鏡", "牙刷牙膏牙線", "購物袋", "手機充電線", "鞋子", "口罩", "棉花棒", "梳子", "防曬裝備", "洗卸用品", "衛生紙", "衛生棉", "濕紙巾", "毛巾"]
-        };
-
+        // 行李打包清單（100% 保留所有原始預設清單項目與排序）
+        function listenToChecklistChanges() {
+            ['carry', 'check'].forEach(tab => {
+                onSnapshot(doc(db, "checklists", tab), (docSnap) => {
+                    let items = [];
+                    if (docSnap.exists()) items = docSnap.data().items || [];
+                    else {
+                        items = tab === 'carry' 
+                            ? ["護照正本與機票確認憑證", "日幣現金與海外高回饋信用卡", "手機與行動電源(需隨身登機)", "環球影城電子門票存檔QR", "個人必備藥品與防曬用品"]
+                            : ["換洗衣物與盥洗保養套裝", "充電線材與日本規格雙腳插頭", "休閒耐磨好走路布鞋", "空行李箱(預留藥妝購物空間)"];
+                    }
+                    renderChecklistPanel(tab, items);
+                });
+            });
+        }
 
         function renderChecklistPanel(tab, items) {
             const container = document.getElementById(`list-container-${tab}`);
