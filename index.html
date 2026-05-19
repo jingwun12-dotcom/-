@@ -23,7 +23,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-
     </style>
 </head>
 <body class="pb-24 max-w-md mx-auto min-h-screen shadow-xl bg-[#EBF3F0] relative">
@@ -624,7 +623,7 @@
             if(p.length < 6) return alert("密碼長度至少需6碼！");
             try {
                 const cred = await createUserWithEmailAndPassword(auth, e, p);
-const finalAvatar = base64Avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}&background=34d399&color=fff&size=120&bold=true`;
+                const av = base64Avatar || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310B981'/><text x='50%' y='60%' text-anchor='middle' fill='white' font-size='32' font-weight='bold'>Go</text></svg>";
                 await setDoc(doc(db, "memberProfiles", cred.user.uid), { name: n, avatar: av, uid: cred.user.uid });
             } catch(err) { alert("註冊失敗: " + err.message); }
         };
