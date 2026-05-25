@@ -1067,18 +1067,23 @@ initWalletUI();
         };
 
         // 🔥 核心重構：讓 Firebase 即時監聽與資料流在前端完全分水嶺分流
-        onSnapshot(query(collection(db, "expenses"), orderBy("createdAt", "desc")), (snap) => {
-            globalGroupExpenses = [];
-            globalPersonalExpenses = [];
-            snap.forEach(d => { 
-                const data = d.data();
-                const row = { id: d.id, ...data };
-                if (data.mode === 'group') {
-                    globalGroupExpenses.push(row);
-                } else if (data.mode === 'personal') {
-                    globalPersonalExpenses.push(row);
-                }
-            });
+ onSnapshot(collection(db, "expenses"), (snapshot) => {
+
+    globalGroupExpenses = [];
+    globalPersonalExpenses = [];
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+
+        if (data.mode === "personal") {
+            globalPersonalExpenses.push(data);
+        } else {
+            globalGroupExpenses.push(data);
+        }
+    });
+
+    updatePersonalWalletSummary();
+});
             loadExpenses();
         });
 
