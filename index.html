@@ -34,7 +34,7 @@
                 <p class="text-xs text-slate-400 mt-1">本指南已啟用帳戶驗證保護成員隱私</p>
             </div>
              
-            <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <div id="auth-tab-bar" class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
                 <button onclick="toggleAuthMode('signin')" id="btn-tab-signin" class="w-1/2 py-2 rounded-lg text-center bg-white text-slate-700 shadow-xs">登入帳戶</button>
                 <button onclick="toggleAuthMode('signup')" id="btn-tab-signup" class="w-1/2 py-2 rounded-lg text-center text-slate-400">註冊新成員</button>
             </div>
@@ -42,6 +42,9 @@
             <div id="form-signin" class="space-y-3">
                 <input type="email" id="signin-email" placeholder="電子郵件 (Email)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
                 <input type="password" id="signin-password" placeholder="密碼 (Password)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
+                <div class="text-right">
+                    <button onclick="toggleAuthMode('forgot')" class="text-[11px] text-emerald-600 hover:underline font-semibold">忘記密碼？</button>
+                </div>
                 <button onclick="handleSignIn()" class="w-full bg-emerald-400 text-white text-xs py-2.5 rounded-xl font-bold shadow-md hover:bg-emerald-500 transition">驗證並登入</button>
             </div>
 
@@ -62,6 +65,15 @@
                 <input type="email" id="signup-email" placeholder="設定電子郵件 (Email)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
                 <input type="password" id="signup-password" placeholder="設定登入密碼 (至少6碼)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
                 <button onclick="handleSignUp()" class="w-full bg-blue-400 text-white text-xs py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-500 transition">創建成員身分</button>
+            </div>
+
+            <div id="form-forgot" class="hidden space-y-3">
+                <p class="text-xs text-slate-500 leading-relaxed">請輸入您的註冊電子郵件，系統將會向該信箱發送重設密碼驗證信函，點選信中連結即可重新設定新密碼。</p>
+                <input type="email" id="forgot-email" placeholder="輸入電子郵件 (Email)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="toggleAuthMode('signin')" class="bg-slate-100 text-slate-500 text-xs py-2.5 rounded-xl font-bold">返回登入</button>
+                    <button onclick="handleResetPassword()" class="bg-amber-400 text-white text-xs py-2.5 rounded-xl font-bold shadow-md hover:bg-amber-500 transition">發送重設信</button>
+                </div>
             </div>
         </div>
     </div>
@@ -90,7 +102,10 @@
                     </select>
                 </div>
             </div>
-            <input type="text" id="edit-plan-desc" placeholder="詳細說明、備忘錄" class="w-full bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl text-xs focus:outline-none">
+            <div>
+                <label class="text-[10px] text-slate-400 font-bold block mb-1">詳細說明、備忘錄 (支援換行)</label>
+                <textarea id="edit-plan-desc" rows="3" placeholder="詳細說明、備忘錄" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs focus:outline-none"></textarea>
+            </div>
             <input type="text" id="edit-plan-map" placeholder="Google Maps 地圖網址" class="w-full bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl text-xs focus:outline-none">
             <div class="flex items-center space-x-2 py-0.5">
                 <input type="checkbox" id="edit-plan-important" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400">
@@ -111,7 +126,10 @@
         </div>
         <div class="relative">
             <div onclick="toggleUserDropdown()" class="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 pl-2 pr-3 py-1 rounded-full shadow-xs cursor-pointer hover:opacity-90 transition">
-                <img id="current-user-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23ccc'/></svg>" class="w-6 h-6 rounded-full border border-white bg-slate-200 object-cover">
+                <div id="avatar-container" class="w-6 h-6 rounded-full border border-white shadow-2xs flex items-center justify-center text-[10px] font-bold text-white overflow-hidden bg-slate-300">
+                    <img id="current-user-avatar" src="" class="w-full h-full object-cover hidden">
+                    <span id="current-user-text-avatar" class="hidden"></span>
+                </div>
                 <span id="current-user-name" class="text-xs font-bold text-slate-600">載入中...</span>
                 <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 ml-0.5"></i>
             </div>
@@ -191,7 +209,10 @@
                         </select>
                     </div>
                 </div>
-                <input type="text" id="plan-desc" placeholder="詳細說明、備忘錄" class="w-full bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl text-xs focus:outline-none">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">詳細說明、備忘錄 (支援換行)</label>
+                    <textarea id="plan-desc" rows="2" placeholder="詳細說明、備忘錄" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-xs focus:outline-none"></textarea>
+                </div>
                 <input type="text" id="plan-map" placeholder="Google Maps 導航連結 (選填)" class="w-full bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl text-xs focus:outline-none">
                 <div class="flex items-center space-x-2">
                     <input type="checkbox" id="plan-important" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400">
@@ -214,7 +235,7 @@
                     <input type="text" id="guide-tag" placeholder="分類 (如 Osaka // 浪漫)" class="bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl text-xs focus:outline-none">
                     <input type="text" id="guide-title" placeholder="景點名稱" class="bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl text-xs focus:outline-none">
                 </div>
-                <textarea id="guide-desc" rows="3" placeholder="請輸入玩法、景點背景或美食心得..." class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-xs text-slate-600 focus:outline-none"></textarea>
+                <textarea id="guide-desc" rows="3" placeholder="請輸入玩法、景點背景或美食心得 (支援換行)..." class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-xs text-slate-600 focus:outline-none"></textarea>
                 <input type="text" id="guide-map" placeholder="Google Maps 地圖網址 (選填)" class="w-full bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl text-xs focus:outline-none">
                 <input type="text" id="guide-tip" placeholder="高亮提示欄 (選填，如：💡 小提示：注意防寒)" class="w-full bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl text-xs focus:outline-none">
                 <button onclick="addCustomGuide()" class="w-full bg-slate-700 text-white text-xs py-2 rounded-xl font-bold shadow-xs">儲存並建立景點筆記</button>
@@ -256,7 +277,7 @@
             </div>
 
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                <div class="flex border-b border-slate-100 pb-2 font-bold text-xs gap-2">
+                <div id="wallet-action-tabs" class="flex border-b border-slate-100 pb-2 font-bold text-xs gap-2">
                     <button onclick="switchWalletAction('expense')" id="btn-action-expense" class="text-slate-700 border-b-2 border-emerald-500 pb-1">👥 紀錄消費</button>
                     <button onclick="switchWalletAction('settle')" id="btn-action-settle" class="text-slate-400 pb-1">🤝 債務清償平衡</button>
                 </div>
@@ -312,16 +333,34 @@
 
             <div id="panel-group-settlement" class="bg-gradient-to-br from-slate-700 to-slate-800 text-white p-4 rounded-2xl shadow-sm space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-600 pb-1.5">
-                    <h3 class="font-bold text-xs tracking-wider flex items-center"><i class="fa-solid fa-memberProfiles-viewfinder mr-1.5 text-emerald-400"></i>全團最小金流清算總結 (含還款折抵)</h3>
+                    <h3 class="font-bold text-xs tracking-wider flex items-center"><i class="fa-solid fa-money-check-dollar mr-1.5 text-emerald-400"></i>全團最小金流清算總結 (含還款折抵)</h3>
                     <span class="text-[9px] bg-slate-600 px-2 py-0.5 rounded-md text-slate-300">精準計算</span>
                 </div>
                 <div class="text-xs space-y-1 text-slate-200">
                     <div class="flex justify-between"><span>公帳總計消費 (日幣):</span><span id="split-total-jpy" class="font-bold text-emerald-300">¥ 0</span></div>
                     <div class="flex justify-between border-b border-slate-600/50 pb-1"><span>公帳總計消費 (台幣):</span><span id="split-total-twd" class="font-bold">NT$ 0</span></div>
                 </div>
-                <div id="split-memberProfiles-detail" class="space-y-1 text-[11px] pt-1"></div>
+                <div id="split-member-detail" class="space-y-1 text-[11px] pt-1"></div>
                 <div class="text-[10px] text-amber-300 font-bold pt-1.5"><i class="fa-solid fa-money-bill-transfer"></i> 最終最少金流匯款指南：</div>
                 <div id="split-settlement-plan" class="bg-slate-900/30 p-2.5 rounded-xl text-[11px] text-emerald-200 space-y-1 leading-relaxed border border-slate-600/30"></div>
+            </div>
+
+            <div id="panel-personal-settlement" class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-sm space-y-3 hidden">
+                <div class="flex justify-between items-center border-b border-emerald-500 pb-1.5">
+                    <h3 class="font-bold text-xs tracking-wider flex items-center"><i class="fa-solid fa-user-wallet mr-1.5 text-amber-300"></i>您的個人私帳消費總額</h3>
+                    <span class="text-[9px] bg-emerald-700 px-2 py-0.5 rounded-md text-emerald-200">個人專屬</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-center py-1">
+                    <div class="bg-emerald-900/20 p-2 rounded-xl border border-white/10">
+                        <span class="text-[10px] text-emerald-200 block font-medium">私帳日幣總支出</span>
+                        <span id="personal-total-jpy" class="text-base font-bold text-amber-300">¥ 0</span>
+                    </div>
+                    <div class="bg-emerald-900/20 p-2 rounded-xl border border-white/10">
+                        <span class="text-[10px] text-emerald-200 block font-medium">私帳台幣總支出</span>
+                        <span id="personal-total-twd" class="text-base font-bold text-white">NT$ 0</span>
+                    </div>
+                </div>
+                <p class="text-[9px] text-emerald-100/80 text-center leading-relaxed">💡 此數據包含所有在私帳中以日幣或台幣登錄的項目（依上方自訂匯率自動換算加總）。</p>
             </div>
 
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -358,7 +397,7 @@
 
             <div class="flex justify-end">
                 <button onclick="exportChecklistToText()" class="text-[11px] bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded-xl font-bold hover:bg-blue-100 transition flex items-center gap-1">
-                    <i class="fa-solid fa-file-export"></i> 複製目前完整打包清單
+                    <i class="fa-solid fa-file-export"></i> 複製目前打包清單
                 </button>
             </div>
 
@@ -383,23 +422,16 @@
                         <span class="font-bold text-blue-700"><i class="fa-solid fa-train mr-2"></i>JR 西日本 (近畿全區網)</span>
                         <i class="fa-solid fa-chevron-right text-blue-400 text-[10px]"></i>
                     </a>
-                    <a href="https://subway.osakametro.co.jp/guide/routemap.php" target="_blank" class="flex items-center justify-between p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-xs">
-                        <span class="font-bold text-emerald-700"><i class="fa-solid fa-train-subway mr-2"></i>大阪地鐵 (Osaka Metro)</span>
-                        <i class="fa-solid fa-chevron-right text-emerald-400 text-[10px]"></i>
-                    </a>
-                    <a href="https://kyoto.travel/tw/getting-around/" target="_blank" class="flex items-center justify-between p-3 bg-teal-50/50 rounded-xl border border-teal-100 hover:bg-teal-50 transition text-xs">
-                        <span class="font-bold text-teal-700"><i class="fa-solid fa-bus mr-2"></i>京都交通資訊導覽</span>
-                        <i class="fa-solid fa-chevron-right text-teal-400 text-[10px]"></i>
-                    </a>
-                    <a href="https://www.kintetsu.co.jp/station/" target="_blank" class="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl border border-amber-100 hover:bg-amber-50 transition text-xs">
-                        <span class="font-bold text-amber-700"><i class="fa-solid fa-route mr-2"></i>近鐵電車路線圖 (往奈良)</span>
-                        <i class="fa-solid fa-chevron-right text-amber-400 text-[10px]"></i>
+                    <a href="https://subway.osakametro.co.jp/guide/library/subway_routemap.pdf" target="_blank" class="flex items-center justify-between p-3 bg-red-50/50 rounded-xl border border-red-100 hover:bg-red-50 transition text-xs">
+                        <span class="font-bold text-red-700"><i class="fa-solid fa-map-location mr-2"></i>Osaka Metro 地鐵路線圖 (PDF)</span>
+                        <i class="fa-solid fa-chevron-right text-red-400 text-[10px]"></i>
                     </a>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
-                <h3 class="font-bold text-sm text-slate-700"><i class="fa-solid fa-cloud-sun text-emerald-400 mr-2"></i>即時氣象預報</h3>
-                <a href="https://www.jma.go.jp/jma/index.html" target="_blank" class="block w-full text-center bg-gradient-to-r from-emerald-400 to-blue-400 text-white font-bold py-2 rounded-xl text-xs shadow-xs hover:opacity-95 transition">
+            <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-2">
+                <h3 class="font-bold text-sm text-slate-700 flex items-center"><i class="fa-solid fa-cloud-sun text-amber-500 mr-2"></i>🌤️ 日本氣象廳即時天氣預報</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">建議在出發前三天點擊下方連結，確認關西地區各城市最新降雨機率與氣溫：</p>
+                <a href="https://www.jma.go.jp/jma/index.html" target="_blank" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs shadow-xs hover:opacity-95 transition block text-center">
                     <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i>開啟日本氣象廳 (JMA) 官網
                 </a>
             </div>
@@ -430,44 +462,49 @@
     </nav>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
+        // Firebase 連線配置
         const firebaseConfig = {
-            apiKey: "AIzaSyD7ISA5yXaNuXljUmxfjWSnV1F30jSkqmY",
-            authDomain: "japan-trip-1caaa.firebaseapp.com",
-            projectId: "japan-trip-1caaa",
-            storageBucket: "japan-trip-1caaa.firebasestorage.app",
-            messagingSenderId: "1086615857851",
-            appId: "1:1086615857851:web:d2fe13d44ea1070039d79e"
+            authDomain: "kansai-travel-guide.firebaseapp.com",
+            projectId: "kansai-travel-guide",
+            storageBucket: "kansai-travel-guide.appspot.com",
+            messagingSenderId: "338148381832",
+            appId: "1:338148381832:web:ca5c56d2524b08709549ff"
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
+        // 系統變數定義
         let currentUid = null;
         let currentDay = 1;
+        let walletMode = 'group'; // 'group' 或 'personal'
+        let walletAction = 'expense'; // 'expense' 或 'settle'
         let currentListTab = 'carry';
-        let walletMode = 'group';
-        let walletAction = 'expense';
         let base64Avatar = "";
-        
-        let allProfilesCached = [];
-        let globalGroupExpenses = [];  // 🔥 新增：獨立分流保存公帳，不受個人私帳切換干擾
-        let globalPersonalExpenses = []; // 🔥 新增：獨立分流保存私帳
 
-        const seedItinerary = {
+        let allProfilesCached = [];
+        let globalGroupExpenses = [];
+        let globalPersonalExpenses = [];
+
+        // 預設打包清單資料庫
+        const defaultLists = {
+            carry: ["護照正本","日幣現金","信用卡/雙幣卡","手機與E-sim確認","行動電源與充電線","Visit Japan Web 截圖"],
+            check: ["換洗衣物與外套","休閒便鞋/雨具","個人保養品/保險套","盥洗用品與牙刷","萬用轉接頭","個人常備藥品"]
+        };
+
+        // 內建預設行程表 (含加裝自動換行處理)
+        const fixedDayPlans = {
             1: [
-                { time: "06:30", title: "第一航廈集合", desc: "準備搭乘星宇航空，確認手提行李無違禁品。", duration: 95, trans: "✈️ 飛機" },
-                { time: "11:45", title: "抵達 Kobe Airport Terminal 2", desc: "抵達神戶機場，辦理入境並提取行李。", duration: 90, trans: "🚇 地鐵/火車" },
-                { time: "13:15", title: "抵達 JR 三宮站", desc: "經由港灣人工島線轉乘至JR三宮站，準備前往大阪。", duration: 58, trans: "🚇 地鐵/火車" },
-                { time: "14:13", title: "抵達 鶴橋站", desc: "轉乘至鶴橋，直奔下榻飯店放行李。", duration: 14, trans: "👣 步行" },
-                { time: "14:27", title: "下榻放行李：ESLEAD酒店-大阪鶴橋", desc: "辦理 Check-in 或寄放行李，稍作休息。", map: "https://www.eslead-hotel.com/zh-HK/tsuruhashi/", duration: 41, trans: "🚇 地鐵/火車" },
-                { time: "15:08", title: "景點：大阪城", desc: "參觀天守閣，欣賞宏偉護城河與歷史古蹟。", map: "https://maps.app.goo.gl/gctZ6jE3D4bXpbyK9", duration: 120, trans: "🚇 地鐵/火車" },
-                { time: "17:08", title: "景點：Detective Conan Bronze Statue", desc: "尋找讀賣電視台前的大盤名偵探柯南銅像打卡拍照！", map: "https://maps.app.goo.gl/wS3x8bZ6mGgXWq6C6", duration: 47, trans: "🚇 地鐵/火車" },
-                { time: "17:55", title: "逛街：心齋橋筋商店街", desc: "藥妝、服飾主戰場，店鋪極多極好逛。", map: "https://maps.app.goo.gl/N8wN9vBvA6ZkWXGv8", duration: 64, trans: "👣 步行" },
+                { time: "11:45", title: "抵達神戶機場 (UKB)", desc: "星宇航空準時降落，辦理入境日本手續並領取行李。", duration: 60, trans: "🚇 地鐵/火車" },
+                { time: "13:00", title: "搭乘神戶新交通港灣人工島線", desc: "自機場站搭乘捷運前往「三宮」轉乘中心。", duration: 40, trans: "🚇 地鐵/火車" },
+                { time: "14:00", title: "搭乘 JR 快速線直奔大阪", desc: "由三宮站乘坐JR神戶線新快速火車，前往大阪鶴橋站。", duration: 50, trans: "🚇 地鐵/火車" },
+                { time: "15:00", title: "抵達 ESLEAD HOTEL 大阪鶴橋 辦理 Check-in", desc: "將行李安頓在舒適的公寓式酒店房間，稍作歇息。", duration: 60, trans: "👣 步行" },
+                { time: "16:30", title: "景點：心齋橋 ➔ 道頓堀 漫步", desc: "關西代表性繁華街區！一覽巨大霓虹看板與熱鬧商店街。", map: "https://maps.app.goo.gl/N6V6b7v6mZwkWmX9A", duration: 140, trans: "🚇 地鐵/火車" },
                 { time: "18:59", title: "打卡：Glico Sign Dotonbori", desc: "必拍道頓堀固力果跑跑人霓虹看板，晚餐可在此街享用。", map: "https://maps.app.goo.gl/N6V6b7v6mZwkWmX9A", duration: 79, trans: "🚇 地鐵/火車" },
                 { time: "20:18", title: "返回飯店休息", desc: "返回 ESLEAD酒店-大阪鶴橋，養精蓄銳。", duration: 60, trans: "👣 步行" }
             ],
@@ -479,25 +516,25 @@
                 { time: "16:00", title: "景點：祇園", desc: "京都傳統繁華街區，街廓古色古香。", map: "https://maps.app.goo.gl/E8v7v7m7mZwkWm9C9", duration: 40, trans: "👣 步行" },
                 { time: "16:40", title: "景點：花見小路通", desc: "保存良好的茶屋街道，有機會與趕場的藝妓擦身而過。", map: "https://maps.app.goo.gl/F9v7v7m7mZwkWmAD9", duration: 110, trans: "🚇 地鐵/火車" },
                 { time: "18:30", title: "晚餐：空蟬亭", desc: "享用極致熟成炸豬排美食，記得提前預約。", duration: 227, trans: "🚇 地鐵/火車" },
-                { time: "22:17", title: "返回飯店", desc: "返回 ESLEAD酒店-大阪鶴橋 休息。", duration: 60, trans: "👣 步行" }
+                { time: "22:17", title: "返回飯店", desc: "返回 ESLEAD酒店-大阪鶴橋 休息。" }
             ],
             3: [
-                { time: "07:00", title: "飯店出發", desc: "提早出發搶攻環球影城開園黃金時間！", duration: 38, trans: "🚇 地鐵/火車" },
-                { time: "07:38", title: "夢幻樂園：日本環球影城 (USJ)", desc: "暢玩超級任天堂世界、哈利波特禁忌之旅！", map: "https://maps.app.goo.gl/G7v7v7m7mZwkWmBE9", duration: 772, trans: "🚇 地鐵/火車" },
-                { time: "20:30", title: "晚餐：燒肉力丸 難波道頓堀店", desc: "痛快享用單點吃到飽日式燒肉，補充整天消耗的體力。", duration: 55, trans: "🚇 地鐵/火車" },
-                { time: "21:25", title: "返回飯店", desc: "返回 ESLEAD酒店-大阪鶴橋。", duration: 60, trans: "👣 步行" }
+                { time: "08:30", title: "飯店出發", desc: "本日為全天日本環球影城(USJ)狂歡日！", duration: 45, trans: "🚇 地鐵/火車" },
+                { time: "09:15", title: "暢玩：日本環球影城 (USJ)", desc: "進入USJ，主攻瑪利歐賽車、哈利波特禁忌之旅及各式主題限定活動！", map: "https://maps.app.goo.gl/fk9ZpxAEZnay3TDf6", duration: 600, trans: "🚇 地鐵/火車" },
+                { time: "19:15", title: "USJ 閉園 ➔ 難波/道頓堀吃宵夜", desc: "離開影城後前往難波，享用道地的大阪燒或章魚燒宵夜。", duration: 120, trans: "🚇 地鐵/火車" },
+                { time: "21:15", title: "返回飯店", desc: "返回 ESLEAD酒店-大阪鶴橋。" }
             ],
             4: [
-                { time: "08:00", title: "飯店退房出發", desc: "收拾完整行李退房，準備前往奈良。", duration: 80, trans: "🚇 地鐵/火車" },
-                { time: "09:20", title: "景點：奈良公園", desc: "與野生小鹿近距離互動、餵食鹿仙貝（小心屁股被咬）。", map: "https://maps.app.goo.gl/H8v7v7m7mZwkWmCF9", duration: 100, trans: "👣 步行" },
-                { time: "11:00", title: "景點：Tōdai-ji 東大寺", desc: "世界最大木造建築，參拜壯觀的奈良大佛並挑戰鑽柱子。", map: "https://maps.app.goo.gl/I9v7v7m7mZwkWmDG9", duration: 51, trans: "🚇 地鐵/火車" },
-                { time: "11:51", title: "交通：近鐵奈良站", desc: "返回車站搭車，準備回到大阪市區周邊景點。", duration: 129, trans: "🚇 地鐵/火車" },
-                { time: "14:00", title: "景點：通天閣", desc: "走訪新世界老街，可體驗通天閣巨大溜滑梯，吃新世界串炸。", map: "https://maps.app.goo.gl/J9v7v7m7mZwkWmEH9", duration: 150, trans: "🚇 地鐵/火車" },
-                { time: "16:30", title: "飯店取行李", desc: "回到 ESLEAD酒店-大阪鶴橋 提取寄放的行李，移動往神戶。", duration: 90, trans: "🚇 地鐵/火車" },
-                { time: "18:00", title: "下榻放行李：Villa Fontaine 神戶三宮", desc: "辦理 Check-In 入住，今晚住在浪漫的神戶。", map: "https://www.hvf.jp/chi/kobe-sannomiya/room/detail_200.html", duration: 90, trans: "👣 步行" },
-                { time: "19:30", title: "景點：Mosaic Big Ferris Wheel", desc: "搭乘馬賽克廣場摩天輪，眺望神戶港絢麗港景。", map: "https://maps.app.goo.gl/K9v7v7m7mZwkWmFI9", duration: 75, trans: "👣 步行" },
-                { time: "20:45", title: "景點：神戶港塔", desc: "欣賞神戶地標「紅色鼓狀」夜間燈光秀。", map: "https://maps.app.goo.gl/L9v7v7m7mZwkWmGJ9", duration: 20, trans: "👣 步行" },
-                { time: "21:05", title: "返回飯店", desc: "返回 Villa Fontaine 神戶三宮 休息。", duration: 60, trans: "👣 步行" }
+                { time: "08:30", title: "退房並轉移陣地", desc: "辦理退房，攜帶行李前往奈良，傍晚再轉移前往神戶。", duration: 50, trans: "🚇 地鐵/火車" },
+                { time: "09:20", title: "近鐵奈良站行李寄放", desc: "在車站找大置物櫃寄放全部行李箱，輕裝出發看鹿。", duration: 30, trans: "👣 步行" },
+                { time: "09:50", title: "景點：奈良公園 (與梅花鹿互動)", desc: "向路邊攤購買鹿仙貝，小心熱情的鹿群圍攻喔！", map: "https://maps.app.goo.gl/mL4StakMPTLHAAZZ7", duration: 120, trans: "👣 步行" },
+                { time: "11:50", title: "景點：東大寺參拜", desc: "欣賞宏偉的全木造大佛殿與神聖高大的巨大盧舍那佛像。", map: "https://maps.app.goo.gl/GzG5885TEDteuc7i7", duration: 90, trans: "👣 步行" },
+                { time: "13:20", title: "午餐：志津香釜飯 or 奈良在地麵食", desc: "享用奈良七種釜飯人氣美食（排隊人潮較多請注意）。", duration: 90, trans: "🚇 地鐵/火車" },
+                { time: "14:50", title: "領取行李 ➔ 出發前往神戶", desc: "回到近鐵奈良站取回行李，搭乘近鐵/阪神直通特快列車前往神戶三宮。", duration: 90, trans: "🚇 地鐵/火車" },
+                { time: "16:20", title: "抵達 Villa Fontaine 神戶三宮 Check-in", desc: "入住神戶精緻飯店，放置大件行李。", duration: 60, trans: "👣 步行" },
+                { time: "17:20", title: "景點：神戶港灣散策 + 欣賞夜景", desc: "觀賞著名的神戶港紅色港口塔與浪漫迷人的臨海摩天輪燈光。", duration: 150, trans: "🚇 地鐵/火車" },
+                { time: "19:50", title: "晚餐：神戶港馬賽克廣場美食餐廳", desc: "一邊欣賞海景一邊享用精緻西餐或日式料理。", duration: 100, trans: "👣 步行" },
+                { time: "21:30", title: "返回飯店", desc: "返回 Villa Fontaine 神戶三宮 休息。", duration: 60, trans: "👣 步行" }
             ],
             5: [
                 { time: "08:30", title: "飯店出發", desc: "神戶精華景點一日遊，出發！", duration: 30, trans: "🚇 地鐵/火車" },
@@ -517,74 +554,117 @@
         };
 
         const fixedGuides = [
-            { id:"g1",  tag:  "大阪 // 戰國史蹟",  title: "大阪城天守閣",  desc: "日本三名城之一，天守閣內展示大量豐臣秀吉歷史文物。護城河及巨石城牆非常壯觀。\n● 玩法：搭乘電梯或步行上天守閣展望台鳥瞰大阪市區景致。\n● 建議花費：純逛公園免費；天守閣門票 ¥600。",  map: "https://maps.app.goo.gl/bk6sF3Eq4m5xGps47",  tip: "💡 注意：天守閣下午 4:30 停止入場，建議提早抵達。" }, 
-            { id:"g2", tag:  "大阪 // 動漫打卡",  title: "名偵探柯南銅像",  desc: "位於日賣電視台大樓前方，有柯南、少年偵探團以及毛利小五郎的精緻青銅雕像，是柯南迷必朝聖打卡點！\n● 玩法：與柯南擺出經典的『真相只有一個』姿勢合照。\n● 建議花費：免費參觀。",  map: "https://maps.app.goo.gl/s2CEegTQVXUUY9it6",  tip: "💡 小撇步：電視台內部一樓大廳偶爾也有動漫相關佈置，可以順道入內探訪。" }, 
-            { id:"g3", tag:  "大阪 // 購物天堂",  title: "心齋橋筋商店街",  desc: "大阪最代表性的長形拱廊商店街，聚集各大藥妝店、UNIQLO、GU 以及各式潮流服飾與小吃。\n● 玩法：瘋狂貨比三家買藥妝，記得準備好優惠券與護照辦理免稅。\n● 建議花費：依個人購物預算而定，藥妝消費滿 ¥5000 可免稅。",  map: "https://maps.app.goo.gl/h9XD2NFcYwPwtf8o6",  tip: "💡 提示：下午至晚上人潮極度擁擠，顧好隨身財物。" }, 
-            { id:"g4", tag:  "大阪 // 經典地標",  title: "道頓堀固力果跑跑人 (Glico Sign)",  desc: "戎橋旁的巨大固力果跑跑人看板是大阪的代名詞，周邊滿是立體誇張招牌（蟹道樂、章魚燒）。\n● 玩法：在戎橋上與跑跑人單腳舉手合影，並品嚐章魚燒與大阪燒。\n● 建議花費：街區免費；小吃每份約 ¥600 - ¥1000。",  map: "https://maps.app.goo.gl/NZXN7s6UUUB81EhL8",  tip: "💡 最佳拍照點：過橋到河岸下方走道，由下往上拍人像最不容易被路人擋住。" }, 
-            { id:"g5", tag:  "京都 // 朱紅鳥居",  title: "伏見稻荷大社",  desc: "以漫延整座山頭的「千本鳥居」聞名，供奉商業與農業之神狐狸使者。\n● 玩法：沿著紅色鳥居隧道步行慢遊，購買狐狸繪馬寫下心願。\n● 建議花費：免費入內。",  map: "https://maps.app.goo.gl/1Y56XMukrs4FVpUU8",  tip: "💡 注意事項：想拍空景務必像我們一樣排在 8:30 前抵達，否則人潮會非常驚人！" }, 
-            { id:"g6", tag:  "京都 // 美食廚房",  title: "錦市場",  desc: "擁有數百年歷史的傳統市場，街道上方有彩色玻璃頂棚，齊聚上百家京料理食材與特色小吃店。\n● 綜合玩法：邊走邊看（但不可邊走邊吃！要站在店家規定區域吃完），必吃豆乳甜甜圈、章魚鵪鶉蛋串、現烤海鮮。\n● 建議花費：小吃每樣 ¥300 - ¥800 不等。",  map: "https://maps.app.goo.gl/W7HdtPe4moe6Jzfg9",  tip: "💡 提醒：這裡嚴禁邊走邊吃，垃圾請直接丟在購買店家的垃圾桶中。" }, 
-            { id:"g7", tag:  "京都 // 世界遺產",  title: "清水寺",  desc: "京都最古老的寺院，全殿不費一根釘子、全木造的「清水舞台」懸空建於懸崖上，極其震撼。\n● 玩法：參拜大殿、至音羽瀑布飲用泉水（健康、學業、戀愛三選一），隨後順遊二三年坂古街。\n● 建議花費：門票 ¥400。",  map: "https://maps.app.goo.gl/KUngd8mWg7Ay6mU89",  tip: "💡 散策提示：沿途石階梯較多，務必穿著最好走的鞋子。" }, 
-            { id:"g8", tag:  "京都 // 傳統街廓",  title: "祇園",  desc: "京都最具代表性的花街，以傳統木造格子窗建築「町家」為特色，充滿濃濃的江戶風情。\n● 玩法：黃昏時分漫步，感受古都華燈初上的神祕浪漫氛圍。\n● 建議花費：免費散步。",  map: "https://maps.app.goo.gl/9mghBZdMnZx9Kspa8",  tip: "💡 規記：請勿任意拉扯或強行拍攝路過的藝妓，保持禮貌距離。" }, 
-            { id:"g9", tag:  "京都 // 花街小巷",  title: "花見小路通",  desc: "祇園精華區域，街道由石板鋪成，兩旁盡是高級料亭與茶屋，是京都高檔文化的象徵。\n● 玩法：欣賞傳統高雅的日式建築門面，體驗靜謐的歷史感。\n● 建議花費：免門票；若在此用餐費用極高。",  map: "https://maps.app.goo.gl/bvs1RSbfJHbRmLy6A",  tip: "💡 嚴格禁止：部分私人巷弄有禁止拍照告示，違者會罰款 ¥10000，請復加留意路標！" }, 
-            { id:"g10", tag:  "大阪 // 夢幻樂園",  title: "日本環球影城 (USJ)",  desc: "世界級主題樂園！最新「超級任天堂世界」與經典「哈利波特」是必衝園區。\n● 核心玩法：開園立刻衝任天堂園區保證入園，或提前買好快速通關。必玩馬利歐賽車與禁忌之旅。\n● 建議花費：門票約 ¥8600 - ¥10400 (依日期波動)。",  map: "https://maps.app.goo.gl/fk9ZpxAEZnay3TDf6",  tip: "💡 超重要：出發前務必下載 USJ 官方 APP，進園第一時間搶當天熱門園區的保存券 (整理券)。" }, 
-            { id:"g11", tag:  "奈良 // 神之使者",  title: "奈良公園",  desc: "擁有上千隻野生梅花鹿的巨大自然公園，這裡的鹿被視為神的使者，聰明且熱情。\n● 玩法：向攤販購買鹿仙貝，對小鹿點頭敬禮，牠們也會對你鞠躬回禮喔！\n● 建議花費：公園免費；鹿仙貝每份 ¥200。",  map: "https://maps.app.goo.gl/mL4StakMPTLHAAZZ7",  tip: "💡 警告：若手上拿著仙貝卻故意不給，可能會被鹿頂撞、咬衣服或撞屁股，請速戰速決！" }, 
-            { id:"g12", tag:   "奈良 // 木造之巔",  title: "東大寺 ",  desc: "距今千年以上歷史，其大佛殿為全世界現存最大的木造建築，殿內高達 15 公尺的盧舍那大佛令人屏息。\n● 玩法：參拜大佛，並嘗試挑戰穿過殿內柱子底部的「大佛鼻孔」巨洞（傳說穿過能保平安）。\n● 建議花費：大佛殿門票 ¥600。",  map: "https://maps.app.goo.gl/GzG5885TEDteuc7i7",  tip: "💡 提示：東大寺外圍的鹿群相對溫和，適合合照。" }, 
-            { id:"g13", tag:  "大阪 // 復古老街",  title: "通天閣 & 新世界",  desc: "充滿昭和復古感的老街區，通天閣頂端有幸運之神 Billiken 雕像，近年新增了刺激的巨型透明滑梯。\n● 玩法：拍下街區華麗誇張的河豚大燈籠，上通天閣俯瞰，晚餐吃在地著名的元祖串炸。\n● 建議花費：通天閣展望台 ¥900；巨型溜滑梯體驗 ¥1000。",  map: "https://maps.app.goo.gl/N2XpmqgHUGNpLbqY9",  tip: "💡 小建議：通天閣塔頂溜滑梯速度極快、非常刺激，心臟病或易頭暈者請衡量。" }, 
-            { id:"g14", tag:  "神戶 // 港灣浪漫",  title: "馬賽克摩天輪 (Mosaic Ferris Wheel)",  desc: "位於神戶港港灣人工島 Mosaic 廣場旁，隨著大摩天輪緩緩上升，神戶港、六甲山與明石海峽大橋的立體夜景盡收眼底。\n● 玩法：情侶約會必排，夜晚車廂會有繽紛的發光動畫，從車廂拍向神戶港塔視角絕佳。\n● 建議花費：摩天輪搭乘費 ¥800/人。",  map: "https://maps.app.goo.gl/2JQLTaiMBQg4ZLn89",  tip: "💡 拍點：摩天輪下方也是拍攝神戶港夜景建築群的一線極佳角度。" }, 
-            { id:"g15", tag:  "神戶 // 地標建築",  title: "神戶港塔 (Kobe Port Tower)",  desc: "世界首創管狀網目結構的紅高塔，被譽為「鋼鐵美女」。設有高空透明步道與 360 度旋轉咖啡廳。\n● 玩法：在港邊拍攝其與海洋博物館交織的絢麗燈光秀，亦可購票上塔觀景。\n● 建議花費：純外觀欣賞免費；登塔展望層門票約 ¥1000。",  map: "https://maps.app.goo.gl/1FgKVJovUJCAicHn6",  tip: "💡 亮點：神戶港塔夜間點燈非常唯美，是神戶最著名的地標風景。" }, 
-            { id:"g16", tag:  "神戶 // 世界遺產",  title: "姬路城 (白鷺城)",  desc: "日本保存最完好的江戶時代城郭，姬路城外觀宛如白鷺展開雙翅的優美姿態，因此也被稱作「白鷺城」，是日本「現存十二天守」中最高的一座\n● 玩法：沿著迂迴防禦城道登天守閣，欣賞全木造卡榫樑柱結構，極致震撼。\n● 建議花費：門票 ¥1000。",  map: "https://maps.app.goo.gl/hpyjmjKJG9nureME7",  tip: "💡 備註：從神戶三宮搭乘火車前往約 40-50 分鐘，大天守閣內樓梯極陡，需脫鞋攀爬。" }, 
-            { id:"g17", tag:  "神戶 // 洋式購物",  title: "元町商店街 & 南京町",  desc: "元町商店街林立眾多百年歐風老店與咖啡廳，質感沉穩；緊鄰的「南京町」則是關西著名中華街。\n● 玩法：在元町喝下午茶買神戶風月堂洋菓子，再去南京町吃老祥記豚饅。\n● 建議花費：小吃零錢價約 ¥200 - ¥500。",  map: "https://maps.app.goo.gl/mswZT8Lc1qbaYtQV6",  tip: "💡 提示：南京町假日人潮洶湧，購買排隊名店小吃要有排隊心理準備。" }, 
-            { id:"g18", tag:  "神戶 // 異國風情",  title: "神戶北野異人館街",  desc: "明治開港時期外國領事與商人的精緻洋房聚落，依山而建，街道充滿歐洲小鎮風情。\n● 玩法：漫步斜坡古街，參觀指標性的「風見雞館」與「萌黃之館」，並朝聖全日本最美的星巴克北野異人館店。\n● 建議花費：街區散步免費；部分異人館內部參觀門票 ¥300 - ¥500 不等。",  map: "https://maps.app.goo.gl/RcSnbybGCnU5dBoX8",  tip: "💡 穿著：整區都是連續陡坡，請務必著舒適好走的運動鞋。" }, 
-            { id:"g19", tag:  "神戶 // 百萬夜景",  title: "摩耶山掬星台",  desc: "日本三大夜景之一！意指這裡的夜景璀璨閃耀，猶如「用手即可舀起漫天繁星」般夢幻。\n● 玩法：搭乘摩耶登山纜車與高空纜車 (Maya Viewline) 攻頂，眺望整個大阪灣無敵星河夜景。\n● 建議花費：纜車來回票約 ¥1560。",  map: "https://maps.app.goo.gl/nmLRWLwBM323aScM7",  tip: "💡 重大警告：山上體感溫度比平地低 5-10 度，即使是 6 月夜晚也**非常寒冷、風極大**，務必攜帶防風外套！並注意下山末班纜車時間。" }, 
+            { id:"g1", tag: "大阪 // 戰國史蹟", title: "大阪城天守閣", desc: "日本三名城之一，天守閣內展示大量豐臣秀吉歷史文物。護城河及巨石城牆非常壯觀。\n● 玩法：搭乘電梯至頂樓俯瞰大阪市容，隨後逐層往下參觀。\n● 建議花費：門票 ¥600。", map: "https://maps.google.com" },
+            { id:"g2", tag: "大阪 // 繁華商圈", title: "心齋橋 & 道頓堀", desc: "大阪最強購物與美食宇宙中心。藥妝、潮流服飾品牌齊聚，各種浮誇的巨型立體招牌琳瑯滿目。\n● 玩法：在道頓堀與固力果跑跑人合照，一邊品嚐章魚燒與金龍拉麵。\n● 建議花費：免費漫步，買藥妝與吃美食依個人而定。", map: "https://maps.google.com" },
+            { id:"g3", tag: "大阪 // 夢幻樂園", title: "日本環球影城 (USJ)", desc: "世界級主題樂園！最新「超級任天堂世界」與經典「哈利波特」是必衝園區。\n● 核心玩法：開園立刻衝任天堂園區保證入園，或提前買好快速通關。必玩馬利歐賽車與禁忌之旅。\n● 建議花費：門票約 ¥8600 - ¥10400 (依日期波動)。", map: "https://maps.google.com", tip: "💡 超重要：出發前務必下載 USJ 官方 APP，進園第一時間搶當天熱門園區的保存券 (整理券)。" },
+            { id:"g11", tag: "奈良 // 神之使者", title: "奈良公園", desc: "擁有上千隻野生梅花鹿的巨大自然公園，這裡的鹿被視為神的使者，聰明且熱情。\n● 玩法：向攤販購買鹿仙貝，對小鹿點頭敬禮，牠們也會對你鞠躬回禮喔！\n● 建議花費：公園免費；鹿仙貝每份 ¥200。", map: "https://maps.google.com", tip: "💡 警告：若手上拿著仙貝卻故意不給，可能會被鹿頂撞、咬衣服或撞屁股，請速戰速決！" },
+            { id:"g12", tag: "奈良 // 木造之巔", title: "東大寺 ", desc: "距今千年以上歷史，其大佛殿為全世界現存最大的木造建築，殿內高達 15 公尺的盧舍那大佛令人屏息。\n● 玩法：參拜大佛，並嘗試挑戰穿過殿內柱子底部的「大佛鼻孔」巨洞（傳說穿過能保平安）。\n● 建議花費：大佛殿門票 ¥600。", map: "https://maps.google.com", tip: "💡 提示：東大寺外圍的鹿群相對溫和，適合合照。" },
+            { id:"g13", tag: "大阪 // 復古老街", title: "通天閣 & 新世界", desc: "充滿昭和復古感的老街區，通天閣頂端有幸運之神 Billiken 雕像，近年新增了刺激的巨型透明滑梯。\n● 玩法：拍下街區華麗誇張的河豚大燈籠，上通天閣俯瞰，晚餐吃在地著名的元祖串炸。\n● 建議花費：通天閣展望台 ¥900；巨型溜滑梯體驗 ¥1000。", map: "https://maps.google.com" }
         ];
 
-        const defaultLists = {
-            carry: ["護照正本", "日幣現金", "信用卡/雙幣卡", "手機與E-sim條碼", "行動電源", "Visit Japan Web 截圖", "牙套/個人藥品"],
-            check: ["換洗衣物", "充電線/豆腐頭", "盥洗保養品", "雨傘/雨衣", "休閒走路鞋", "空行李袋(裝戰利品)"]
-        };
+        let customPlansList = [];
 
-        async function checkAndSeedItinerary() {
-            const snap = await getDocs(collection(db, "itinerary"));
-            if (snap.empty) {
-                for (const day in seedItinerary) {
-                    for (const item of seedItinerary[day]) {
-                        await addDoc(collection(db, "itinerary"), {
-                            day: parseInt(day),
-                            time: item.time,
-                            title: item.title,
-                            desc: item.desc || "",
-                            map: item.map || "",
-                            duration: item.duration || 60,
-                            trans: item.trans || "🚇 地鐵/火車",
-                            important: false
-                        });
-                    }
-                }
-            }
+        // 輔助函式：將文字中的 \n 轉換成 HTML 換行標籤 <br>
+        function formatNL(str) {
+            if (!str) return "";
+            return str.replace(/\n/g, "<br>");
         }
 
-        window.switchTab = (tabId) => {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+        // 輔助函式：根據使用者名稱生成專屬高品質純色背景與首字
+        function renderCustomAvatar(name) {
+            const avatarImg = document.getElementById('current-user-avatar');
+            const avatarTxt = document.getElementById('current-user-text-avatar');
+            const avatarContainer = document.getElementById('avatar-container');
             
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-emerald-500');
-                el.classList.add('text-slate-400');
-            });
-            const activeNav = document.getElementById(`nav-${tabId}`);
-            if(activeNav) {
-                activeNav.classList.add('text-emerald-500');
-                activeNav.classList.remove('text-slate-400');
+            // 如果用戶有設定 base64 頭像圖片，優先使用圖片
+            const currentUserData = allProfilesCached.find(p => p.uid === currentUid);
+            if (currentUserData && currentUserData.avatar) {
+                avatarImg.src = currentUserData.avatar;
+                avatarImg.classList.remove('hidden');
+                avatarTxt.classList.add('hidden');
+                avatarContainer.className = "w-6 h-6 rounded-full border border-white shadow-2xs overflow-hidden bg-slate-300";
+                return;
+            }
+
+            // 否則，改用乾淨的純色背景搭配暱稱第一個字
+            if (!name) name = "User";
+            const firstChar = name.trim().charAt(0).toUpperCase();
+            
+            // 根據名字的第一個字的碼位計算固定色調
+            const colors = [
+                'bg-linear-to-br(from-emerald-400,to-teal-500)',
+                'bg-linear-to-br(from-blue-400,to-indigo-500)',
+                'bg-linear-to-br(from-purple-400,to-pink-500)',
+                'from-orange-400 to-amber-500 bg-gradient-to-br',
+                'from-rose-400 to-red-500 bg-gradient-to-br',
+                'from-sky-400 to-cyan-500 bg-gradient-to-br'
+            ];
+            const charCode = firstChar.charCodeAt(0) || 0;
+            const selectedColorClass = colors[charCode % colors.length];
+
+            avatarImg.classList.add('hidden');
+            avatarTxt.innerText = firstChar;
+            avatarTxt.classList.remove('hidden');
+            avatarContainer.className = `w-6 h-6 rounded-full border border-white shadow-2xs flex items-center justify-center text-[10px] font-bold text-white overflow-hidden ${selectedColorClass}`;
+        }
+
+        // 認證頁籤與模式切換 (整合登入、註冊、忘記密碼)
+        window.toggleAuthMode = (mode) => {
+            const formSignin = document.getElementById('form-signin');
+            const formSignup = document.getElementById('form-signup');
+            const formForgot = document.getElementById('form-forgot');
+            const tabTabBar = document.getElementById('auth-tab-bar');
+            
+            formSignin.classList.add('hidden');
+            formSignup.classList.add('hidden');
+            formForgot.classList.add('hidden');
+            tabTabBar.classList.remove('hidden');
+
+            if (mode === 'signin') {
+                formSignin.classList.remove('hidden');
+                document.getElementById('btn-tab-signin').className = "w-1/2 py-2 rounded-lg text-center bg-white text-slate-700 shadow-xs";
+                document.getElementById('btn-tab-signup').className = "w-1/2 py-2 rounded-lg text-center text-slate-400";
+            } else if (mode === 'signup') {
+                formSignup.classList.remove('hidden');
+                document.getElementById('btn-tab-signin').className = "w-1/2 py-2 rounded-lg text-center text-slate-400";
+                document.getElementById('btn-tab-signup').className = "w-1/2 py-2 rounded-lg text-center bg-white text-slate-700 shadow-xs";
+            } else if (mode === 'forgot') {
+                formForgot.classList.remove('hidden');
+                tabTabBar.classList.add('hidden'); // 忘記密碼時隱藏頂部雙分頁切換
             }
         };
 
-        window.toggleAuthMode = (mode) => {
-            document.getElementById('form-signin').classList.toggle('hidden', mode !== 'signin');
-            document.getElementById('form-signup').classList.toggle('hidden', mode !== 'signup');
-            document.getElementById('btn-tab-signin').className = mode === 'signin' ? "w-1/2 py-2 rounded-lg text-center bg-white text-slate-700 shadow-xs" : "w-1/2 py-2 rounded-lg text-center text-slate-400";
-            document.getElementById('btn-tab-signup').className = mode === 'signup' ? "w-1/2 py-2 rounded-lg text-center bg-white text-slate-700 shadow-xs" : "w-1/2 py-2 rounded-lg text-center text-slate-400";
+        // 密碼重設發信邏輯功能
+        window.handleResetPassword = async () => {
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) return alert("請輸入註冊時填寫的電子郵件信箱！");
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("✨ 重設密碼驗證信已成功發送！\n請前往您的電子信箱收信，並依信中導引連結重新設定密碼。");
+                toggleAuthMode('signin');
+            } catch (err) {
+                console.error(err);
+                alert("發送失敗，請確認該電子郵件是否正確註冊！\n錯誤原因: " + err.message);
+            }
         };
 
+        // 頁面大分頁導覽切換
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-emerald-500');
+                b.classList.add('text-slate-400');
+            });
+            document.getElementById(`nav-${tabId}`).classList.add('text-emerald-500');
+        };
+
+        // 頂部頭像選單下拉切換
+        window.toggleUserDropdown = () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        };
+
+        // 頭像上傳壓縮優化預覽
         window.processAndPreviewAvatar = (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -594,11 +674,18 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const max_w = 120; const max_h = 120;
-                    let w = img.width; let h = img.height;
-                    if(w > h) { if(w > max_w){ h *= max_w/w; w = max_w; } } else { if(h > max_h){ w *= max_h/h; h = max_h; } }
+                    const max_w = 120;
+                    const max_h = 120;
+                    let w = img.width;
+                    let h = img.height;
+                    if(w > h) {
+                        if(w > max_w){ h *= max_w/w; w = max_w; }
+                    } else {
+                        if(h > max_h){ w *= max_h/h; h = max_h; }
+                    }
                     canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
                     base64Avatar = canvas.toDataURL('image/jpeg', 0.8);
                     document.getElementById('new-avatar-preview').src = base64Avatar;
                     document.getElementById('new-avatar-preview').classList.remove('hidden');
@@ -608,54 +695,63 @@
             reader.readAsDataURL(file);
         };
 
+        // 認證操作邏輯 (登入、註冊、登出、銷戶)
         window.handleSignIn = async () => {
             const e = document.getElementById('signin-email').value.trim();
             const p = document.getElementById('signin-password').value;
             if(!e || !p) return alert("請輸入完整登入資訊！");
-            try { await signInWithEmailAndPassword(auth, e, p); } catch(err) { alert("登入失敗: " + err.message); }
+            try {
+                await signInWithEmailAndPassword(auth, e, p);
+            } catch(err) {
+                alert("驗證登入失敗: " + err.message);
+            }
         };
 
         window.handleSignUp = async () => {
-            const n = document.getElementById('signup-name').value.trim();
+            const name = document.getElementById('signup-name').value.trim();
             const e = document.getElementById('signup-email').value.trim();
             const p = document.getElementById('signup-password').value;
-            if(!n || !e || !p) return alert("請完整填寫暱稱與帳密！");
-            if(p.length < 6) return alert("密碼長度至少需6碼！");
+            if(!name || !e || !p) return alert("請填妥所有註冊欄位！");
+            if(p.length < 6) return alert("為維護安全性，密碼需至少設定 6 碼！");
             try {
                 const cred = await createUserWithEmailAndPassword(auth, e, p);
-                const av = base64Avatar || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310B981'/><text x='50%' y='60%' text-anchor='middle' fill='white' font-size='32' font-weight='bold'>Go</text></svg>";
-                await setDoc(doc(db, "memberProfiles", cred.user.uid), { name: n, avatar: av, uid: cred.user.uid });
-            } catch(err) { alert("註冊失敗: " + err.message); }
+                await setDoc(doc(db, "members", cred.user.uid), {
+                    name,
+                    avatar: base64Avatar || ""
+                });
+                base64Avatar = "";
+                document.getElementById('new-avatar-preview').classList.add('hidden');
+                document.getElementById('new-avatar-icon').classList.remove('hidden');
+                document.getElementById('signup-name').value = "";
+                document.getElementById('signup-email').value = "";
+                document.getElementById('signup-password').value = "";
+                alert("成員帳戶創建成功！");
+            } catch(err) {
+                alert("註冊失敗: " + err.message);
+            }
         };
 
-        window.handleSignOut = () => { signOut(auth).then(() => { document.getElementById('user-dropdown').classList.add('hidden'); }); };
+        window.handleSignOut = () => {
+            signOut(auth);
+            document.getElementById('user-dropdown').classList.add('hidden');
+        };
 
         window.handleDeleteAccount = async () => {
-            if(!currentUid) return;
-            if(!confirm("⚠️ 確定要刪除您目前的這名成員身分嗎？此動作無法復原！")) return;
+            if (!confirm("⚠️ 警告：您正要執行「銷戶 (刪除帳號)」程序！\n這會將您的成員帳號以及資料庫中的大頭貼設定完全移除，此動作無法復原。是否確定繼續？")) return;
             try {
                 const user = auth.currentUser;
-                if(user) {
-                    await deleteDoc(doc(db, "memberProfiles", currentUid));
-                    await deleteUser(user);
-                    alert("🗑️ 帳號已成功註冊銷戶！");
+                if (user) {
+                    await deleteDoc(doc(db, "members", user.uid));
+                    await user.delete();
+                    alert("您的成員帳號身分已成功銷戶移除。");
                     window.location.reload();
                 }
-            } catch(err) { alert("刪除帳號失敗 (可能需要您重新登入): " + err.message); }
+            } catch (err) {
+                alert("為了安全性保護，請重新登入帳戶後，才能立刻進行銷戶操作。\n原因: " + err.message);
+            }
         };
 
-        window.toggleUserDropdown = () => { document.getElementById('user-dropdown').classList.toggle('hidden'); };
-
-        window.switchDay = (d) => {
-            currentDay = d;
-            document.querySelectorAll('.day-btn').forEach(el => {
-                el.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200";
-            });
-            document.getElementById(`btn-d${d}`).className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-bold text-sm shadow-sm transition-all duration-200";
-            loadScheduleData();
-        };
-
-        let customPlansList = [];
+        // ------------------ PLAN 行程模組 ------------------
         onSnapshot(query(collection(db, "itinerary"), orderBy("time", "asc")), (snap) => {
             customPlansList = [];
             snap.forEach(d => { customPlansList.push({ id: d.id, ...d.data() }); });
@@ -668,11 +764,24 @@
             return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
         }
 
+        window.switchDay = (dayNum) => {
+            currentDay = dayNum;
+            document.querySelectorAll('.day-btn').forEach(b => {
+                b.className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-white text-slate-500 border border-slate-100 text-sm font-medium transition-all duration-200";
+            });
+            document.getElementById(`btn-d${dayNum}`).className = "day-btn flex-shrink-0 w-16 py-2 rounded-xl text-center bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-bold text-sm shadow-sm transition-all duration-200";
+            loadScheduleData();
+        };
+
         function loadScheduleData() {
             const container = document.getElementById('day-schedule-container');
             container.innerHTML = "";
-
-            let combined = customPlansList.filter(p => parseInt(p.day) === currentDay);
+            let combined = [...(fixedDayPlans[currentDay] || [])];
+            
+            customPlansList.filter(p => parseInt(p.day) === currentDay).forEach(cp => {
+                combined.push(cp);
+            });
+            
             combined.sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
 
             if(combined.length === 0) {
@@ -701,49 +810,49 @@
                 } else {
                     intervalHtml = `
                         <div class="my-2 ml-4 flex items-center gap-2 text-[11px] text-slate-400 font-medium">
-                            <span>⏱️ 預計停留 ${durationVal} 分鐘 (今日最終站)</span>
+                            <span>⏱️ 預計停留 ${durationVal} 分鐘</span>
                         </div>
                     `;
                 }
 
-                const card = document.createElement('div');
-                card.className = "relative mb-1 group";
-                card.innerHTML = `
-                    <div class="absolute -left-[21px] top-4 w-2.5 h-2.5 rounded-full border-2 border-white ${isImportant ? 'bg-rose-400 ring-4 ring-rose-100' : 'bg-emerald-400 ring-4 ring-emerald-100'} z-10"></div>
-                    <div class="p-3.5 rounded-2xl transition border ${isImportant ? 'bg-rose-50/80 border-rose-100 shadow-xs' : 'bg-white border-slate-100 shadow-xs'}">
-                        <div class="flex justify-between items-start gap-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-black tracking-wider ${isImportant ? 'text-rose-500' : 'text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md'}">${item.time}</span>
-                                <h4 class="font-bold text-xs text-slate-700">${item.title}</h4>
-                            </div>
-                            <div class="flex items-center space-x-1.5">
-                                <button onclick="openEditPlanModal('${item.id}', '${item.time}', \`${item.title.replace(/'/g, "\\'")}\`, \`${(item.desc||'').replace(/'/g, "\\'")}\`, '${item.map||''}', ${isImportant?true:false}, ${durationVal}, '${transVal}')" class="text-slate-300 hover:text-emerald-500 transition text-[11px]">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                ${item.map ? `<a href="${item.map}" target="_blank" class="text-blue-400 text-xs hover:scale-110 transition"><i class="fa-solid fa-location-arrow"></i></a>` : ''}
+                const block = document.createElement('div');
+                block.className = "relative mb-2 group";
+                block.innerHTML = `
+                    <div class="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full border-2 border-emerald-400 bg-white group-hover:bg-emerald-400 transition-colors z-10"></div>
+                    <div class="${isImportant ? 'bg-amber-50/80 border border-amber-200 shadow-xs' : 'bg-white border border-slate-100 shadow-2xs'} p-3 rounded-2xl relative transition hover:shadow-xs">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-extrabold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg tracking-wider">${item.time}</span>
+                            <div class="flex gap-2">
+                                ${item.map ? `<a href="${item.map}" target="_blank" class="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-0.5"><i class="fa-solid fa-map-location-dot"></i> 導航</a>` : ''}
+                                ${item.id ? `<button onclick="openEditPlanModal('${item.id}')" class="text-slate-300 hover:text-emerald-500 text-xs"><i class="fa-solid fa-ellipsis"></i></button>` : ''}
                             </div>
                         </div>
-                        ${item.desc ? `<p class="text-[11px] text-slate-500 mt-1 pl-1 border-l border-slate-200">${item.desc}</p>` : ''}
+                        <h4 class="font-bold text-xs text-slate-700 mt-1.5 tracking-wide">${item.title}</h4>
+                        ${item.desc ? `<p class="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">${formatNL(item.desc)}</p>` : ''}
                     </div>
                     ${intervalHtml}
                 `;
-                container.appendChild(card);
+                container.appendChild(block);
             });
         }
 
-        window.openEditPlanModal = (id, time, title, desc, map, important, duration, trans) => {
+        window.openEditPlanModal = (id) => {
+            const found = customPlansList.find(p => p.id === id);
+            if(!found) return;
             document.getElementById('edit-plan-id').value = id;
-            document.getElementById('edit-plan-time').value = time;
-            document.getElementById('edit-plan-title').value = title;
-            document.getElementById('edit-plan-desc').value = desc;
-            document.getElementById('edit-plan-map').value = map;
-            document.getElementById('edit-plan-important').checked = important;
-            document.getElementById('edit-plan-duration').value = duration || 60;
-            document.getElementById('edit-plan-trans').value = trans || "🚇 地鐵/火車";
+            document.getElementById('edit-plan-time').value = found.time || "";
+            document.getElementById('edit-plan-title').value = found.title || "";
+            document.getElementById('edit-plan-desc').value = found.desc || "";
+            document.getElementById('edit-plan-map').value = found.map || "";
+            document.getElementById('edit-plan-important').checked = !!found.important;
+            document.getElementById('edit-plan-duration').value = found.duration || 60;
+            document.getElementById('edit-plan-trans').value = found.trans || "🚇 地鐵/火車";
             document.getElementById('edit-plan-modal').classList.remove('hidden');
         };
 
-        window.closeEditPlanModal = () => { document.getElementById('edit-plan-modal').classList.add('hidden'); };
+        window.closeEditPlanModal = () => {
+            document.getElementById('edit-plan-modal').classList.add('hidden');
+        };
 
         window.savePlanEdit = async () => {
             const id = document.getElementById('edit-plan-id').value;
@@ -779,76 +888,27 @@
             if(!time || !title) return alert("請填入時間與名稱！");
             await addDoc(collection(db, "itinerary"), { day: currentDay, time, title, desc, map, important, duration, trans });
             
-            document.getElementById('plan-time').value = ""; document.getElementById('plan-title').value = "";
-            document.getElementById('plan-desc').value = ""; document.getElementById('plan-map').value = "";
+            document.getElementById('plan-time').value = "";
+            document.getElementById('plan-title').value = "";
+            document.getElementById('plan-desc').value = "";
+            document.getElementById('plan-map').value = "";
             document.getElementById('plan-important').checked = false;
         };
 
-	// 核心修正功能 1：銷戶時一併刪除分帳資格與快取資料
-        function handleDeleteAccount() {
-            if (!confirm("⚠️ 警告：確定要刪除您的成員身分 (銷戶) 嗎？\n此動作將會從資料庫中完全抹除您的帳號，且無法還原！")) return;
-            
-            // 模擬 Firebase 的銷戶流程 (請依照您原本實作的 Firebase 程式碼替換，此處示範整合邏輯)
-            console.log("正在執行 Firebase 銷戶程序...", currentUid);
-            
-            const targetUid = currentUid;
-            
-            // 【主動修正：同步將成員從前端分帳快取及下拉選單中完全刪除】
-            profilesCached = profilesCached.filter(p => p.uid !== targetUid);
-            updateMemberSelectors(); // 重新渲染付款人、清償人下拉選單及分帳核取方塊
-            
-            alert("帳號已成功銷戶，分帳資格已同步撤銷！");
-            
-            // 登出並返回登入遮罩
-            currentUid = null;
-            document.getElementById('login-overlay').classList.remove('hidden');
-            document.getElementById('user-dropdown').classList.add('hidden');
-        }
 
-        // 更新記帳拆帳頁面中所有的成員選單
-        function updateMemberSelectors() {
-            const payerSelect = document.getElementById('expense-payer');
-            const settleFrom = document.getElementById('settle-from');
-            const settleTo = document.getElementById('settle-to');
-            const splitContainer = document.getElementById('expense-split-checkboxes');
-            
-            if (!payerSelect || !settleFrom || !settleTo || !splitContainer) return;
-            
-            payerSelect.innerHTML = '';
-            settleFrom.innerHTML = '';
-            settleTo.innerHTML = '';
-            splitContainer.innerHTML = '';
-            
-            profilesCached.forEach(p => {
-                payerSelect.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
-                settleFrom.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
-                settleTo.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
-                splitContainer.innerHTML += `
-                    <label class="flex items-center space-x-1 bg-white border border-slate-200 pl-1.5 pr-2 py-1 rounded-lg text-[11px] font-semibold text-slate-600 cursor-pointer">
-                        <input type="checkbox" value="${p.uid}" class="split-cb rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-3.5 h-3.5" checked>
-                        <span>${p.name}</span>
-                    </label>
-                `;
-            });
-            
-            if (currentUid) {
-                payerSelect.value = currentUid;
-                settleFrom.value = currentUid;
-            }
-        }
-
-        // GUIDE 景點深度誌
-        let customGuidesList = [];
+        // ------------------ GUIDE 景點誌模組 ------------------
+        let databaseGuides = [];
         onSnapshot(collection(db, "guides"), (snap) => {
-            customGuidesList = [];
-            snap.forEach(d => { customGuidesList.push({ id: d.id, ...d.data() }); });
+            databaseGuides = [];
+            snap.forEach(d => { databaseGuides.push({ id: d.id, ...d.data() }); });
             renderGuides();
         });
 
         function renderGuides() {
             const container = document.getElementById('guide-container');
             container.innerHTML = "";
-            const combined = [...fixedGuides, ...customGuidesList];
+            const combined = [...fixedGuides, ...databaseGuides];
+
             combined.forEach(g => {
                 const item = document.createElement('div');
                 item.className = "bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-2 relative";
@@ -858,7 +918,7 @@
                         ${g.map ? `<a href="${g.map}" target="_blank" class="text-blue-500 text-xs font-bold underline flex items-center gap-1"><i class="fa-solid fa-map-location-dot"></i> 地圖</a>` : ''}
                     </div>
                     <h3 class="font-bold text-sm text-slate-700">${g.title}</h3>
-                    <p class="text-xs text-slate-500 leading-relaxed font-medium">${g.desc}</p>
+                    <p class="text-xs text-slate-500 leading-relaxed font-medium">${formatNL(g.desc)}</p>
                     ${g.tip ? `<div class="bg-amber-50/70 p-2 rounded-xl text-[11px] text-amber-700 font-medium border border-amber-100/50">${g.tip}</div>` : ''}
                     ${!g.id.startsWith('g') ? `<button onclick="deleteGuide('${g.id}')" class="absolute bottom-4 right-4 text-slate-300 hover:text-red-400 text-xs"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                 `;
@@ -872,55 +932,97 @@
             const desc = document.getElementById('guide-desc').value.trim();
             const map = document.getElementById('guide-map').value.trim();
             const tip = document.getElementById('guide-tip').value.trim();
+
             if(!title || !desc) return alert("請輸入名稱與心得分享！");
             await addDoc(collection(db, "guides"), { tag, title, desc, map, tip });
-            document.getElementById('guide-tag').value = ""; document.getElementById('guide-title').value = "";
-            document.getElementById('guide-desc').value = ""; document.getElementById('guide-map').value = "";
+            
+            document.getElementById('guide-tag').value = "";
+            document.getElementById('guide-title').value = "";
+            document.getElementById('guide-desc').value = "";
+            document.getElementById('guide-map').value = "";
             document.getElementById('guide-tip').value = "";
         };
 
-        window.deleteGuide = async (id) => { if(confirm("確定刪除此隨行筆記？")) await deleteDoc(doc(db, "guides", id)); };
-
-        // 錢包拆帳核心動作
-        window.switchWalletAction = (action) => {
-            walletAction = action;
-            document.getElementById('wallet-action-expense-form').classList.toggle('hidden', action !== 'expense');
-            document.getElementById('wallet-action-settle-form').classList.toggle('hidden', action !== 'settle');
-            document.getElementById('btn-action-expense').className = action === 'expense' ? "text-slate-700 border-b-2 border-emerald-500 pb-1 font-bold" : "text-slate-400 pb-1";
-            document.getElementById('btn-action-settle').className = action === 'settle' ? "text-slate-700 border-b-2 border-emerald-500 pb-1 font-bold" : "text-slate-400 pb-1";
+        window.deleteGuide = async (id) => {
+            if(confirm("確定要刪除這條自訂隨行筆記嗎？")) {
+                await deleteDoc(doc(db, "guides", id));
+            }
         };
 
-        window.executeCalc = () => {
-            const expr = document.getElementById('calc-expr').value.replace(/\s+/g, '');
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-            if(!expr) return;
-            try {
-                if(!/^[0-9+\-*/().]+$/.test(expr)) throw new Error();
-                const jpy = Function("\"use strict\"; return (" + expr + ")")();
-                document.getElementById('calc-jpy').innerText = `¥ ${Math.round(jpy)}`;
-                document.getElementById('calc-twd').innerText = `NT$ ${Math.round(jpy * rate)}`;
-                document.getElementById('expense-amount').value = Math.round(jpy);
-                document.getElementById('settle-amount').value = Math.round(jpy);
-            } catch(e) { alert("算式語法不正確！"); }
-        };
 
+        // ------------------ WALLET 記帳模組 ------------------
         window.toggleWalletMode = (mode) => {
             walletMode = mode;
             document.getElementById('wallet-tab-group').className = mode === 'group' ? "w-1/2 py-2 rounded-xl text-center bg-gradient-to-r from-emerald-400 to-blue-400 text-white shadow-xs" : "w-1/2 py-2 rounded-xl text-center text-slate-400";
             document.getElementById('wallet-tab-personal').className = mode === 'personal' ? "w-1/2 py-2 rounded-xl text-center bg-gradient-to-r from-emerald-400 to-blue-400 text-white shadow-xs" : "w-1/2 py-2 rounded-xl text-center text-slate-400";
-            document.getElementById('expense-form-title').innerText = mode === 'group' ? "👥 紀錄一筆「團體公帳」消費" : "👤 紀錄一筆「個人私帳」消費";
-            document.getElementById('expense-list-title').innerText = mode === 'group' ? "👥 團體公帳歷史明細" : "👤 個人私帳歷史明細";
-            document.getElementById('group-member-selectors').classList.toggle('hidden', mode === 'personal');
-            document.getElementById('panel-group-settlement').classList.toggle('hidden', mode === 'personal');
-            document.getElementById('btn-action-settle').classList.toggle('hidden', mode === 'personal');
+            
+            const groupMemberSelectors = document.getElementById('group-member-selectors');
+            const walletActionTabs = document.getElementById('wallet-action-tabs');
+            const panelGroup = document.getElementById('panel-group-settlement');
+            const panelPersonal = document.getElementById('panel-personal-settlement');
+
+            if(mode === 'personal') {
+                document.getElementById('expense-form-title').innerHTML = "👤 紀錄一筆「個人私帳」消費";
+                document.getElementById('btn-submit-expense').innerHTML = "儲存消費 👤";
+                groupMemberSelectors.classList.add('hidden');
+                walletActionTabs.classList.add('hidden');
+                switchWalletAction('expense');
+
+                // 面板切換：隱藏公帳，顯示私帳合計板塊
+                panelGroup.classList.add('hidden');
+                panelPersonal.classList.remove('hidden');
+            } else {
+                document.getElementById('expense-form-title').innerHTML = "👥 紀錄一筆「團體公帳」消費";
+                document.getElementById('btn-submit-expense').innerHTML = "儲存消費 🌐";
+                groupMemberSelectors.classList.remove('hidden');
+                walletActionTabs.classList.remove('hidden');
+
+                // 面板切換：隱藏私帳，顯示公帳清算板塊
+                panelGroup.classList.remove('hidden');
+                panelPersonal.classList.add('hidden');
+            }
             loadExpenses();
         };
 
-        // 🔥 核心重構：讓 Firebase 即時監聽與資料流在前端完全分水嶺分流
+        window.switchWalletAction = (action) => {
+            walletAction = action;
+            if(action === 'expense') {
+                document.getElementById('btn-action-expense').className = "text-slate-700 border-b-2 border-emerald-500 pb-1";
+                document.getElementById('btn-action-settle').className = "text-slate-400 pb-1";
+                document.getElementById('wallet-action-expense-form').classList.remove('hidden');
+                document.getElementById('wallet-action-settle-form').classList.add('hidden');
+            } else {
+                document.getElementById('btn-action-expense').className = "text-slate-400 pb-1";
+                document.getElementById('btn-action-settle').className = "text-slate-700 border-b-2 border-emerald-500 pb-1";
+                document.getElementById('wallet-action-expense-form').classList.add('hidden');
+                document.getElementById('wallet-action-settle-form').classList.remove('hidden');
+            }
+        };
+
+        window.executeCalc = () => {
+            const expr = document.getElementById('calc-expr').value.trim();
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
+            if(!expr) return;
+            try {
+                const cleaned = expr.replace(/[^0-14, 15-9\+\-\*\/\.\(\)]/g, '');
+                const resultJpy = Math.round(Function(`"use strict"; return (${cleaned})`)());
+                if(isNaN(resultJpy) || !isFinite(resultJpy)) throw new Error();
+                
+                document.getElementById('calc-jpy').innerText = `¥ ${resultJpy.toLocaleString()}`;
+                document.getElementById('calc-twd').innerText = `NT$ ${Math.round(resultJpy * rate).toLocaleString()}`;
+                document.getElementById('expense-currency').value = "JPY";
+                document.getElementById('expense-amount').value = resultJpy;
+                document.getElementById('settle-currency').value = "JPY";
+                document.getElementById('settle-amount').value = resultJpy;
+            } catch {
+                alert("換算式格式有誤，請輸入正確的加減乘除算式！");
+            }
+        };
+
         onSnapshot(query(collection(db, "expenses"), orderBy("createdAt", "desc")), (snap) => {
             globalGroupExpenses = [];
             globalPersonalExpenses = [];
-            snap.forEach(d => { 
+            snap.forEach(d => {
                 const data = d.data();
                 const row = { id: d.id, ...data };
                 if (data.mode === 'group') {
@@ -939,23 +1041,38 @@
             const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
 
             if(!item || isNaN(inputAmount)) return alert("請輸入完整品項名稱與金額！");
-
             let amountJpy = (currency === 'TWD') ? Math.round(inputAmount / rate) : Math.round(inputAmount);
 
             if(walletMode === 'personal') {
-                await addDoc(collection(db, "expenses"), { mode: "personal", uid: currentUid, item, amount: amountJpy, currency: currency, originalAmount: inputAmount, createdAt: Date.now() });
+                await addDoc(collection(db, "expenses"), {
+                    mode: "personal",
+                    uid: currentUid,
+                    item,
+                    amount: amountJpy,
+                    currency: currency,
+                    originalAmount: inputAmount,
+                    createdAt: Date.now()
+                });
             } else {
                 const payer = document.getElementById('expense-payer').value;
                 const splitWith = [];
                 document.querySelectorAll('.split-cb:checked').forEach(cb => splitWith.push(cb.value));
                 if(splitWith.length === 0) return alert("分攤清單請至少勾選一名成員！");
-                
-                await addDoc(collection(db, "expenses"), { 
-                    mode: "group", item, amount: amountJpy, currency: currency, originalAmount: inputAmount,
-                    payer, splitWith, type: "expense", createdAt: Date.now() 
+
+                await addDoc(collection(db, "expenses"), {
+                    mode: "group",
+                    item,
+                    amount: amountJpy,
+                    currency: currency,
+                    originalAmount: inputAmount,
+                    payer,
+                    splitWith,
+                    type: "expense",
+                    createdAt: Date.now()
                 });
             }
-            document.getElementById('expense-item').value = ""; document.getElementById('expense-amount').value = "";
+            document.getElementById('expense-item').value = "";
+            document.getElementById('expense-amount').value = "";
         };
 
         window.addSettlementRecord = async () => {
@@ -965,44 +1082,77 @@
             const currency = document.getElementById('settle-currency').value;
             const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
 
-            if(fromUser === toUser) return alert("還款與代墊對象不能是同一個人！");
-            if(isNaN(inputAmount) || inputAmount <= 0) return alert("請輸入正確還款代墊金額！");
+            if(fromUser === toUser) return alert("還款人與收款人不可以為同一人！");
+            if(isNaN(inputAmount) || inputAmount <= 0) return alert("請填入正確的還款金額！");
 
             let amountJpy = (currency === 'TWD') ? Math.round(inputAmount / rate) : Math.round(inputAmount);
-
             await addDoc(collection(db, "expenses"), {
-                mode: "group", type: "settlement", item: "🤝 債務清償平衡款項", amount: amountJpy,
-                currency: currency, originalAmount: inputAmount, payer: fromUser, targetUser: toUser, createdAt: Date.now()
+                mode: "group",
+                type: "settlement",
+                payer: fromUser,      // 還款者
+                targetUser: toUser,  // 收款者
+                amount: amountJpy,
+                currency: currency,
+                originalAmount: inputAmount,
+                item: "🤝 清償債務還款",
+                createdAt: Date.now()
             });
 
             document.getElementById('settle-amount').value = "";
-            alert("🤝 債務清償記錄建立並平衡成功！");
+            alert("還款清償平衡已順利送出。");
         };
 
-        window.deleteExpense = async (id) => { if(confirm("確定刪除此筆記記帳明細？")) await deleteDoc(doc(db, "expenses", id)); };
+        window.deleteExpense = async (id) => {
+            if(confirm("確定要移除此筆記帳消費紀錄嗎？")) {
+                await deleteDoc(doc(db, "expenses", id));
+            }
+        };
 
         function loadExpenses() {
             const container = document.getElementById('expense-list');
             container.innerHTML = "";
-            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
-
-            const filtered = (walletMode === 'group') ? globalGroupExpenses : globalPersonalExpenses.filter(e => e.uid === currentUid);
             
-            filtered.forEach(e => {
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
+            const targetArray = (walletMode === 'group') ? globalGroupExpenses : globalPersonalExpenses.filter(p => p.uid === currentUid);
+            document.getElementById('expense-list-title').innerHTML = walletMode === 'group' ? "👥 團體公帳歷史明細" : "👤 個人私帳歷史明細";
+
+            // 如果目前是個人私帳模式，動態執行私帳金額加總功能
+            if(walletMode === 'personal') {
+                let totalPersonalJpy = 0;
+                targetArray.forEach(e => {
+                    totalPersonalJpy += e.amount || 0;
+                });
+                document.getElementById('personal-total-jpy').innerText = `¥ ${totalPersonalJpy.toLocaleString()}`;
+                document.getElementById('personal-total-twd').innerText = `NT$ ${Math.round(totalPersonalJpy * rate).toLocaleString()}`;
+            }
+
+            if(targetArray.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-400 text-center py-6">目前還沒有任何消費紀錄明細。</p>`;
+                calculateSettlement();
+                return;
+            }
+
+            targetArray.forEach(e => {
                 const row = document.createElement('div');
-                row.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl text-xs border border-slate-100/60";
-                let displayAmountText = (e.currency === 'TWD') ? `NT$ ${e.originalAmount} (➔ ¥${e.amount})` : `¥ ${e.amount} (≈ NT$ ${Math.round(e.amount * rate)})`;
+                row.className = "flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100/60";
+                
+                let displayAmountText = "";
+                if(e.currency === 'TWD') {
+                    displayAmountText = `NT$ ${e.originalAmount.toLocaleString()} (¥${e.amount.toLocaleString()})`;
+                } else {
+                    displayAmountText = `¥ ${e.originalAmount.toLocaleString()} (NT$${Math.round(e.amount * rate).toLocaleString()})`;
+                }
 
                 if(e.type === 'settlement') {
-                    const fromName = allProfilesCached.find(p=>p.uid===e.payer)?.name || "成員";
-                    const toName = allProfilesCached.find(p=>p.uid===e.targetUser)?.name || "成員";
+                    const fName = allProfilesCached.find(p=>p.uid===e.payer)?.name || "成員";
+                    const tName = allProfilesCached.find(p=>p.uid===e.targetUser)?.name || "成員";
                     row.innerHTML = `
                         <div class="space-y-0.5">
-                            <div class="font-bold text-amber-600 flex items-center gap-1"><i class="fa-solid fa-handshake"></i> ${e.item}</div>
-                            <div class="text-[10px] text-slate-400 font-bold">${fromName} ➔ 給付/歸還給 ${toName}</div>
+                            <div class="font-bold text-blue-600 flex items-center gap-1"><i class="fa-solid fa-handshake"></i> ${e.item}</div>
+                            <div class="text-[9px] text-slate-400 font-medium">還款人: ${fName} ➔ 收款人: ${tName}</div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="font-black text-amber-600">${displayAmountText}</span>
+                            <span class="font-bold text-blue-600">${displayAmountText}</span>
                             <button onclick="deleteExpense('${e.id}')" class="text-slate-300 hover:text-red-400"><i class="fa-solid fa-circle-xmark"></i></button>
                         </div>
                     `;
@@ -1022,89 +1172,94 @@
                 container.appendChild(row);
             });
 
-            // ⚠️ 修正：無論當前處於什麼分頁，公帳的清算天平一律使用全量獨立的 globalGroupExpenses 陣列
             calculateSettlement();
         }
 
-        // 🌟 最終精準版：天平收支最小金流配對演算法 (徹底修正借貸抵銷不平衡問題)
         function calculateSettlement() {
             const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
             let totalJpy = 0;
             const balance = {};
-
-            // 初始化所有成員的天平為 0
+            
             allProfilesCached.forEach(p => balance[p.uid] = 0);
 
-            // 讀取全量公帳陣列進行分配
             globalGroupExpenses.forEach(e => {
                 if(e.type === 'settlement') {
                     if(balance[e.payer] !== undefined) balance[e.payer] += e.amount;
                     if(balance[e.targetUser] !== undefined) balance[e.targetUser] -= e.amount;
                 } else {
                     totalJpy += e.amount;
-                    // 1. 代墊人先收回完整墊付款
-                    if(balance[e.payer] !== undefined) balance[e.payer] += e.amount;
-                    
-                    // 2. 參與分攤的受益人，每個人均分扣除應付份額
-                    const count = e.splitWith ? e.splitWith.length : 0;
-                    if(count > 0) {
-                        const share = e.amount / count;
-                        e.splitWith.forEach(uid => { 
-                            if(balance[uid] !== undefined) balance[uid] -= share; 
+                    if(balance[e.payer] !== undefined) {
+                        balance[e.payer] += e.amount;
+                    }
+                    if(e.splitWith && e.splitWith.length > 0) {
+                        const perShare = e.amount / e.splitWith.length;
+                        e.splitWith.forEach(id => {
+                            if(balance[id] !== undefined) balance[id] -= perShare;
                         });
                     }
                 }
             });
 
-            document.getElementById('split-total-jpy').innerText = `¥ ${Math.round(totalJpy)}`;
-            document.getElementById('split-total-twd').innerText = `NT$ ${Math.round(totalJpy * rate)}`;
+            document.getElementById('split-total-jpy').innerText = `¥ ${Math.round(totalJpy).toLocaleString()}`;
+            document.getElementById('split-total-twd').innerText = `NT$ ${Math.round(totalJpy * rate).toLocaleString()}`;
 
-            const detailContainer = document.getElementById('split-memberProfiles-detail');
+            const detailContainer = document.getElementById('split-member-detail');
             detailContainer.innerHTML = "";
-            allProfilesCached.forEach(p => {
-                const b = balance[p.uid] || 0;
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center py-0.5 border-b border-slate-600/20";
-                div.innerHTML = `<span>${p.name}:</span><span class="${b>=0?'text-emerald-300':'text-rose-300'} font-bold">${b >= 0 ? '應拿回 ¥' + Math.round(b) : '應支付 ¥' + Math.round(Math.abs(b))}</span>`;
-                detailContainer.appendChild(div);
-            });
+            
+            const debtors = [];
+            const creditors = [];
+
+            for(const uid in balance) {
+                const name = allProfilesCached.find(p=>p.uid===uid)?.name || "成員";
+                const bal = balance[uid];
+                const balText = bal >= 0 ? `應拿回 ¥${Math.round(bal).toLocaleString()}` : `應支付 ¥${Math.round(Math.abs(bal)).toLocaleString()}`;
+                const colorClass = bal >= 0 ? 'text-emerald-400 font-bold' : 'text-red-300';
+                
+                detailContainer.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-900/20 px-2 py-1 rounded-md">
+                        <span>👤 ${name}:</span>
+                        <span class="${colorClass}">${balText}</span>
+                    </div>
+                `;
+
+                if(Math.round(bal) < -1) debtors.push({ uid, name, amount: Math.abs(bal) });
+                if(Math.round(bal) > 1) creditors.push({ uid, name, amount: bal });
+            }
 
             const planContainer = document.getElementById('split-settlement-plan');
             planContainer.innerHTML = "";
-
-            // 將債權人與債務人做最小流配對
-            const creditors = [], debtors = [];
-            for(let uid in balance) {
-                if(balance[uid] > 1) creditors.push({ uid, amt: balance[uid] });
-                else if(balance[uid] < -1) debtors.push({ uid, amt: Math.abs(balance[uid]) });
-            }
-
             let planCount = 0;
             let i = 0, j = 0;
+
             while(i < debtors.length && j < creditors.length) {
-                const d = debtors[i]; const c = creditors[j];
-                if (d.amt <= 1) { i++; continue; }
-                if (c.amt <= 1) { j++; continue; }
+                const d = debtors[i];
+                const c = creditors[j];
+                const settleAmount = Math.min(d.amount, c.amount);
 
-                const transfer = Math.min(d.amt, c.amt);
-                
-                // 🛠️ 關鍵修正：準確搜尋 allProfilesCached 陣列中與 uid 欄位相同的成員真實人名
-                const dName = allProfilesCached.find(p => p.uid === d.uid)?.name || "成員";
-                const cName = allProfilesCached.find(p => p.uid === c.uid)?.name || "成員";
+                if(settleAmount > 5) {
+                    planContainer.innerHTML += `
+                        <div class="flex items-center gap-1">
+                            <span class="text-red-300 font-bold">💸 ${d.name}</span> 
+                            <span>匯給</span> 
+                            <span class="text-emerald-300 font-bold">${c.name}</span> : 
+                            <b class="text-white">¥ ${Math.round(settleAmount).toLocaleString()}</b> 
+                            <span class="text-[9px] text-slate-400">(約NT$${Math.round(settleAmount*rate).toLocaleString()})</span>
+                        </div>
+                    `;
+                    planCount++;
+                }
 
-                const p = document.createElement('p');
-                p.innerHTML = `💸 <b>${dName}</b> ➔ 應匯款給 <b>${cName}</b>：<span class="underline font-black text-white font-mono">¥ ${Math.round(transfer)}</span> (約 NT$ ${Math.round(transfer * rate)})`;
-                planContainer.appendChild(p);
-
-                d.amt -= transfer; c.amt -= transfer;
-                if(d.amt <= 1) i++;
-                if(c.amt <= 1) j++;
-                planCount++;
+                d.amount -= settleAmount;
+                c.amount -= settleAmount;
+                if(d.amount <= 1) i++;
+                if(c.amount <= 1) j++;
             }
+
             if(planCount === 0) planContainer.innerHTML = `<p class="text-center text-slate-300 text-[10px]">🎉 目前帳務完全平衡，互不相欠！</p>`;
         }
 
-        // 打包準備清單（強制文字解析，消滅物體亂碼代碼）
+
+        // ------------------ LISTS 打包清單模組 ------------------
         window.switchListTab = (tab) => {
             currentListTab = tab;
             document.getElementById('list-tab-carry').className = tab === 'carry' ? "w-1/2 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white" : "w-1/2 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
@@ -1129,119 +1284,106 @@
         function renderChecklistPanel(tab, items) {
             const panel = document.getElementById(`list-container-${tab}`);
             panel.innerHTML = "";
-            
-            items.forEach((item, idx) => {
-                let itemText = "";
-                if (typeof item === 'object' && item !== null) {
-                    itemText = item.name || item.text || item.title || JSON.stringify(item);
-                } else {
-                    itemText = String(item);
-                }
-                
-                if(itemText.includes("[object Object]")) {
-                    itemText = defaultLists[tab][idx] || "自訂行李項目";
-                }
-
+            if(items.length === 0) {
+                panel.innerHTML = `<p class="text-xs text-slate-300 text-center py-4">目前沒有任何應帶項目。</p>`;
+                return;
+            }
+            items.forEach((txt, idx) => {
                 const row = document.createElement('div');
-                row.className = "flex justify-between items-center p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-medium";
+                row.className = "flex justify-between items-center text-xs py-1 border-b border-slate-50";
+                
+                // 個人化狀態同步快取
+                const storageKey = `chk_${currentUid}_${tab}_${idx}`;
+                const isChecked = localStorage.getItem(storageKey) === 'true';
+
                 row.innerHTML = `
-                    <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="checkbox" id="cb-${tab}-${idx}" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-4 h-4" onchange="saveChecklistState('${tab}')">
-                        <span class="text-slate-600">${itemText}</span>
+                    <label class="flex items-center space-x-2 cursor-pointer select-none">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="localStorage.setItem('${storageKey}', this.checked)" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-4 h-4">
+                        <span class="text-slate-600 font-medium">${txt}</span>
                     </label>
-                    <button onclick="deleteChecklistItem('${tab}', ${idx})" class="text-slate-300 hover:text-red-400 transition"><i class="fa-solid fa-circle-minus"></i></button>
+                    <button onclick="deleteChecklistItem('${tab}', ${idx})" class="text-slate-200 hover:text-red-400"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
                 `;
                 panel.appendChild(row);
             });
-            
-            const savedState = localStorage.getItem(`chk-${tab}-${currentUid}`);
-            if(savedState) {
-                const checkedIndexes = JSON.parse(savedState);
-                checkedIndexes.forEach(idx => {
-                    const cb = document.getElementById(`cb-${tab}-${idx}`);
-                    if(cb) cb.checked = true;
-                });
-            }
         }
 
-        window.saveChecklistState = (tab) => {
-            const checkedIndexes = [];
-            const panel = document.getElementById(`list-container-${tab}`);
-            panel.querySelectorAll("input").forEach((cb, idx) => { if(cb.checked) checkedIndexes.push(idx); });
-            localStorage.setItem(`chk-${tab}-${currentUid}`, JSON.stringify(checkedIndexes));
-        };
-
         window.addCustomChecklistItem = async () => {
-            const txt = document.getElementById('custom-item-text').value.trim();
+            const input = document.getElementById('custom-item-text');
+            const txt = input.value.trim();
             if(!txt) return;
+
             const docRef = doc(db, "checklists", currentListTab);
             const docSnap = await getDoc(docRef);
-            let currentArray = docSnap.exists() ? (docSnap.data().items || []) : [...defaultLists[currentListTab]];
+            let currentItems = [...defaultLists[currentListTab]];
             
-            currentArray.push(String(txt));
-            await setDoc(docRef, { items: currentArray });
-            document.getElementById('custom-item-text').value = "";
+            if(docSnap.exists() && Array.isArray(docSnap.data().items)) {
+                currentItems = docSnap.data().items;
+            }
+
+            currentItems.push(txt);
+            await setDoc(docRef, { items: currentItems });
+            input.value = "";
         };
 
         window.deleteChecklistItem = async (tab, index) => {
-            if(!confirm("確定要將此物品從行李清單中刪除嗎？")) return;
             const docRef = doc(db, "checklists", tab);
             const docSnap = await getDoc(docRef);
-            if(docSnap.exists()) {
-                let currentArray = docSnap.data().items || [];
-                currentArray.splice(index, 1);
-                await setDoc(docRef, { items: currentArray });
+            let currentItems = [...defaultLists[tab]];
+
+            if(docSnap.exists() && Array.isArray(docSnap.data().items)) {
+                currentItems = docSnap.data().items;
             }
+
+            currentItems.splice(index, 1);
+            await setDoc(docRef, { items: currentItems });
+            localStorage.removeItem(`chk_${currentUid}_${tab}_${index}`);
         };
 
-        window.exportChecklistToText = function() {
-            let textOutput = "📋 【京阪神奈關西遊】打包必備清單導出備份\n\n";
+        window.exportChecklistToText = () => {
+            let textOutput = "【關西旅遊隨身與托運行李打包備忘清單】\n\n";
             ['carry', 'check'].forEach(tab => {
                 textOutput += tab === 'carry' ? "▼ 【隨身行李清單】\n" : "▼ 【托運行李清單】\n";
                 const panel = document.getElementById(`list-container-${tab}`);
                 panel.querySelectorAll("div").forEach(row => {
-                    const cb = row.querySelector("input"); const txt = row.querySelector("span").innerText;
-                    textOutput += ` [${cb && cb.checked ? 'X' : ' '}] ${txt}\n`;
+                    const cb = row.querySelector("input");
+                    const txt = row.querySelector("span").innerText;
+                    textOutput += `  [${cb && cb.checked ? 'X' : ' '}] ${txt}\n`;
                 });
                 textOutput += "\n";
             });
             navigator.clipboard.writeText(textOutput).then(() => alert("📋 打包項目已完整複製到您的剪貼簿！"));
         };
 
-        // 登入流監聽與下拉選單初始化
-        onAuthStateChanged(auth, async (user) => {
-            if(user) {
+
+        // ------------------ 系統狀態初始化監聽 ------------------
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
                 currentUid = user.uid;
                 document.getElementById('login-overlay').classList.add('hidden');
-                await checkAndSeedItinerary();
-
-                // 🌐 全員資料載入與結構化修正
-                onSnapshot(collection(db, "memberProfiles"), (snap) => {
+                
+                // 動態同步並快取群組成員
+                onSnapshot(collection(db, "members"), (snap) => {
                     allProfilesCached = [];
-                    snap.forEach(d => {
-                        const userData = d.data();
-                        // 🛠️ 核心修正：將主鍵 ID 與資料包裝在一起，確保 uid 能夠被成功對比
-                        allProfilesCached.push({
-                            uid: d.id,
-                            name: userData.name || "未命名成員",
-                            avatar: userData.avatar || ""
-                        });
-                    });
-                    
-                    const me = allProfilesCached.find(p => p.uid === currentUid);
-                    if(me) {
-                        document.getElementById('current-user-name').innerText = me.name;
-                        document.getElementById('current-user-avatar').src = me.avatar;
+                    snap.forEach(d => allProfilesCached.push({ uid: d.id, ...d.data() }));
+
+                    const myProfile = allProfilesCached.find(p => p.uid === currentUid);
+                    if(myProfile) {
+                        document.getElementById('current-user-name').innerText = myProfile.name || "旅行成員";
+                        // 套用動態自訂純色首字頭像
+                        renderCustomAvatar(myProfile.name);
                     }
 
+                    // 重新渲染 Wallet 分攤成員選項
                     const payerSelect = document.getElementById('expense-payer');
-                    const splitContainer = document.getElementById('expense-split-checkboxes');
                     const settleFrom = document.getElementById('settle-from');
                     const settleTo = document.getElementById('settle-to');
+                    const splitContainer = document.getElementById('expense-split-checkboxes');
 
                     if(payerSelect && splitContainer) {
-                        payerSelect.innerHTML = ""; splitContainer.innerHTML = "";
-                        settleFrom.innerHTML = ""; settleTo.innerHTML = "";
+                        payerSelect.innerHTML = "";
+                        settleFrom.innerHTML = "";
+                        settleTo.innerHTML = "";
+                        splitContainer.innerHTML = "";
 
                         allProfilesCached.forEach(p => {
                             payerSelect.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
@@ -1268,6 +1410,7 @@
             } else {
                 currentUid = null;
                 document.getElementById('login-overlay').classList.remove('hidden');
+                toggleAuthMode('signin');
             }
         });
     </script>
