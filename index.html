@@ -4,7 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>旅行指南 - 京阪神奈關西遊</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4">
+function formatMultilineText(text) {
+    if (!text) return '';
+    return text
+        .replace(/\n/g, '<br>')
+        .replace(/<br\s*\/?>/gi, '<br>');
+}
+
+window.handleForgotPassword = async function () {
+    const email =
+        document.getElementById('signin-email')?.value ||
+        prompt('請輸入你的登入 Email');
+
+    if (!email) {
+        alert('請先輸入 Email');
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert('密碼重設信已寄出，請至信箱查看。');
+    } catch (err) {
+        console.error(err);
+        alert('寄送失敗：' + (err?.message || '未知錯誤'));
+    }
+};
+
+window.updatePersonalWalletSummary = function () {
+    let totalJPY = 0;
+    let totalTWD = 0;
+
+    if (Array.isArray(globalPersonalExpenses)) {
+        globalPersonalExpenses.forEach(item => {
+            const amount = Number(item.amount || 0);
+
+            if (item.currency === 'JPY') {
+                totalJPY += amount;
+            } else {
+                totalTWD += amount;
+            }
+        });
+    }
+
+    const jpyEl = document.getElementById('personal-total-jpy');
+    const twdEl = document.getElementById('personal-total-twd');
+
+    if (jpyEl) jpyEl.textContent = `¥ ${totalJPY.toLocaleString()}`;
+    if (twdEl) twdEl.textContent = `NT$ ${totalTWD.toLocaleString()}`;
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    setInterval(() => {
+        if (typeof updatePersonalWalletSummary === 'function') {
+            updatePersonalWalletSummary();
+        }
+    }, 1000);
+});
+
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -324,7 +382,26 @@
                 <div id="split-settlement-plan" class="bg-slate-900/30 p-2.5 rounded-xl text-[11px] text-emerald-200 space-y-1 leading-relaxed border border-slate-600/30"></div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+            
+<div id="personal-wallet-summary" class="bg-gradient-to-br from-emerald-500 to-blue-500 text-white p-4 rounded-2xl shadow-sm space-y-2">
+    <div class="flex justify-between items-center">
+        <h3 class="font-bold text-sm">👤 個人記帳總覽</h3>
+        <span class="text-[10px] bg-white/20 px-2 py-1 rounded-full">即時統計</span>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-center">
+        <div class="bg-white/10 rounded-xl p-3">
+            <div class="text-[10px] opacity-80">日幣總支出</div>
+            <div id="personal-total-jpy" class="text-lg font-bold">¥ 0</div>
+        </div>
+        <div class="bg-white/10 rounded-xl p-3">
+            <div class="text-[10px] opacity-80">台幣總支出</div>
+            <div id="personal-total-twd" class="text-lg font-bold">NT$ 0</div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
                     <h3 id="expense-list-title" class="font-bold text-sm text-slate-700">👥 團體公帳歷史明細</h3>
                 </div>
@@ -432,7 +509,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD7ISA5yXaNuXljUmxfjWSnV1F30jSkqmY",
