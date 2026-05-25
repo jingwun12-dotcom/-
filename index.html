@@ -56,22 +56,6 @@ window.togglePersonalSummaryVisibility = function () {
     }
 };
 
-window.updatePersonalWalletSummary = function () {
-    let totalJPY = 0;
-    let totalTWD = 0;
-
-    if (Array.isArray(globalPersonalExpenses)) {
-        globalPersonalExpenses.forEach(item => {
-            const amount = Number(item.amount || 0);
-
-            if (item.currency === 'JPY') {
-                totalJPY += amount;
-            } else {
-                totalTWD += amount;
-            }
-        });
-    }
-
     const jpyEl = document.getElementById('personal-total-jpy');
     const twdEl = document.getElementById('personal-total-twd');
 
@@ -1084,7 +1068,6 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
 
     updatePersonalWalletSummary();
     loadExpenses();
-
 });
 
         window.addExpense = async () => {
@@ -1425,6 +1408,30 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
                 document.getElementById('login-overlay').classList.remove('hidden');
             }
         });
+
+window.updatePersonalWalletSummary = function () {
+
+    let totalJPY = 0;
+    let totalTWD = 0;
+
+    if (Array.isArray(globalPersonalExpenses)) {
+        globalPersonalExpenses.forEach(item => {
+            const amount = Number(item.amount || 0);
+
+            if (item.currency === 'JPY') {
+                totalJPY += amount;
+            } else {
+                totalTWD += amount;
+            }
+        });
+    }
+
+    const jpyEl = document.getElementById('personal-total-jpy');
+    const twdEl = document.getElementById('personal-total-twd');
+
+    if (jpyEl) jpyEl.textContent = `¥ ${totalJPY.toLocaleString()}`;
+    if (twdEl) twdEl.textContent = `NT$ ${totalTWD.toLocaleString()}`;
+};
     </script>
 </body>
 </html>
