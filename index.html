@@ -130,8 +130,6 @@
                     <img id="current-user-avatar" src="" class="w-full h-full object-cover hidden">
                     <span id="current-user-text-avatar" class="hidden"></span>
                 </div>
-                <span id="current-user-name" class="text-xs font-bold text-slate-600">載入中...</span>
-                <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 ml-0.5"></i>
             </div>
             <div id="user-dropdown" class="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 hidden z-50">
                 <button onclick="handleSignOut()" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2">
@@ -422,11 +420,20 @@
                         <span class="font-bold text-blue-700"><i class="fa-solid fa-train mr-2"></i>JR 西日本 (近畿全區網)</span>
                         <i class="fa-solid fa-chevron-right text-blue-400 text-[10px]"></i>
                     </a>
-                    <a href="https://subway.osakametro.co.jp/guide/library/subway_routemap.pdf" target="_blank" class="flex items-center justify-between p-3 bg-red-50/50 rounded-xl border border-red-100 hover:bg-red-50 transition text-xs">
-                        <span class="font-bold text-red-700"><i class="fa-solid fa-map-location mr-2"></i>Osaka Metro 地鐵路線圖 (PDF)</span>
-                        <i class="fa-solid fa-chevron-right text-red-400 text-[10px]"></i>
+                    <a href="https://subway.osakametro.co.jp/guide/routemap.php" target="_blank" class="flex items-center justify-between p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-xs">
+                        <span class="font-bold text-emerald-700"><i class="fa-solid fa-train-subway mr-2"></i>大阪地鐵 (Osaka Metro)</span>
+                        <i class="fa-solid fa-chevron-right text-emerald-400 text-[10px]"></i>
+                    </a>
+                    <a href="https://kyoto.travel/tw/getting-around/" target="_blank" class="flex items-center justify-between p-3 bg-teal-50/50 rounded-xl border border-teal-100 hover:bg-teal-50 transition text-xs">
+                        <span class="font-bold text-teal-700"><i class="fa-solid fa-bus mr-2"></i>京都交通資訊導覽</span>
+                        <i class="fa-solid fa-chevron-right text-teal-400 text-[10px]"></i>
+                    </a>
+                    <a href="https://www.kintetsu.co.jp/station/" target="_blank" class="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl border border-amber-100 hover:bg-amber-50 transition text-xs">
+                        <span class="font-bold text-amber-700"><i class="fa-solid fa-route mr-2"></i>近鐵電車路線圖 (往奈良)</span>
+                        <i class="fa-solid fa-chevron-right text-amber-400 text-[10px]"></i>
                     </a>
                 </div>
+
             </div>
             <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-2">
                 <h3 class="font-bold text-sm text-slate-700 flex items-center"><i class="fa-solid fa-cloud-sun text-amber-500 mr-2"></i>🌤️ 日本氣象廳即時天氣預報</h3>
@@ -1272,7 +1279,7 @@
         }
 
 
-        // ------------------ LISTS 打包清單模組 ------------------
+        // 打包準備清單（強制文字解析，消滅物體亂碼代碼）
         window.switchListTab = (tab) => {
             currentListTab = tab;
             document.getElementById('list-tab-carry').className = tab === 'carry' ? "w-1/2 py-1.5 rounded-lg text-center text-xs font-bold bg-emerald-400 text-white" : "w-1/2 py-1.5 rounded-lg text-center text-xs font-semibold text-slate-400";
@@ -1297,76 +1304,147 @@
         function renderChecklistPanel(tab, items) {
             const panel = document.getElementById(`list-container-${tab}`);
             panel.innerHTML = "";
-            if(items.length === 0) {
-                panel.innerHTML = `<p class="text-xs text-slate-300 text-center py-4">目前沒有任何應帶項目。</p>`;
-                return;
-            }
-            items.forEach((txt, idx) => {
-                const row = document.createElement('div');
-                row.className = "flex justify-between items-center text-xs py-1 border-b border-slate-50";
+            
+            items.forEach((item, idx) => {
+                let itemText = "";
+                if (typeof item === 'object' && item !== null) {
+                    itemText = item.name || item.text || item.title || JSON.stringify(item);
+                } else {
+                    itemText = String(item);
+                }
                 
-                // 個人化狀態同步快取
-                const storageKey = `chk_${currentUid}_${tab}_${idx}`;
-                const isChecked = localStorage.getItem(storageKey) === 'true';
+                if(itemText.includes("[object Object]")) {
+                    itemText = defaultLists[tab][idx] || "自訂行李項目";
+                }
 
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-medium";
                 row.innerHTML = `
-                    <label class="flex items-center space-x-2 cursor-pointer select-none">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="localStorage.setItem('${storageKey}', this.checked)" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-4 h-4">
-                        <span class="text-slate-600 font-medium">${txt}</span>
+                    <label class="flex items-center space-x-2.5 cursor-pointer">
+                        <input type="checkbox" id="cb-${tab}-${idx}" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-4 h-4" onchange="saveChecklistState('${tab}')">
+                        <span class="text-slate-600">${itemText}</span>
                     </label>
-                    <button onclick="deleteChecklistItem('${tab}', ${idx})" class="text-slate-200 hover:text-red-400"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
+                    <button onclick="deleteChecklistItem('${tab}', ${idx})" class="text-slate-300 hover:text-red-400 transition"><i class="fa-solid fa-circle-minus"></i></button>
                 `;
                 panel.appendChild(row);
             });
+            
+            const savedState = localStorage.getItem(`chk-${tab}-${currentUid}`);
+            if(savedState) {
+                const checkedIndexes = JSON.parse(savedState);
+                checkedIndexes.forEach(idx => {
+                    const cb = document.getElementById(`cb-${tab}-${idx}`);
+                    if(cb) cb.checked = true;
+                });
+            }
         }
 
-        window.addCustomChecklistItem = async () => {
-            const input = document.getElementById('custom-item-text');
-            const txt = input.value.trim();
-            if(!txt) return;
+        window.saveChecklistState = (tab) => {
+            const checkedIndexes = [];
+            const panel = document.getElementById(`list-container-${tab}`);
+            panel.querySelectorAll("input").forEach((cb, idx) => { if(cb.checked) checkedIndexes.push(idx); });
+            localStorage.setItem(`chk-${tab}-${currentUid}`, JSON.stringify(checkedIndexes));
+        };
 
+        window.addCustomChecklistItem = async () => {
+            const txt = document.getElementById('custom-item-text').value.trim();
+            if(!txt) return;
             const docRef = doc(db, "checklists", currentListTab);
             const docSnap = await getDoc(docRef);
-            let currentItems = [...defaultLists[currentListTab]];
+            let currentArray = docSnap.exists() ? (docSnap.data().items || []) : [...defaultLists[currentListTab]];
             
-            if(docSnap.exists() && Array.isArray(docSnap.data().items)) {
-                currentItems = docSnap.data().items;
-            }
-
-            currentItems.push(txt);
-            await setDoc(docRef, { items: currentItems });
-            input.value = "";
+            currentArray.push(String(txt));
+            await setDoc(docRef, { items: currentArray });
+            document.getElementById('custom-item-text').value = "";
         };
 
         window.deleteChecklistItem = async (tab, index) => {
+            if(!confirm("確定要將此物品從行李清單中刪除嗎？")) return;
             const docRef = doc(db, "checklists", tab);
             const docSnap = await getDoc(docRef);
-            let currentItems = [...defaultLists[tab]];
-
-            if(docSnap.exists() && Array.isArray(docSnap.data().items)) {
-                currentItems = docSnap.data().items;
+            if(docSnap.exists()) {
+                let currentArray = docSnap.data().items || [];
+                currentArray.splice(index, 1);
+                await setDoc(docRef, { items: currentArray });
             }
-
-            currentItems.splice(index, 1);
-            await setDoc(docRef, { items: currentItems });
-            localStorage.removeItem(`chk_${currentUid}_${tab}_${index}`);
         };
 
-        window.exportChecklistToText = () => {
-            let textOutput = "【關西旅遊隨身與托運行李打包備忘清單】\n\n";
+        window.exportChecklistToText = function() {
+            let textOutput = "📋 【京阪神奈關西遊】打包必備清單導出備份\n\n";
             ['carry', 'check'].forEach(tab => {
                 textOutput += tab === 'carry' ? "▼ 【隨身行李清單】\n" : "▼ 【托運行李清單】\n";
                 const panel = document.getElementById(`list-container-${tab}`);
                 panel.querySelectorAll("div").forEach(row => {
-                    const cb = row.querySelector("input");
-                    const txt = row.querySelector("span").innerText;
-                    textOutput += `  [${cb && cb.checked ? 'X' : ' '}] ${txt}\n`;
+                    const cb = row.querySelector("input"); const txt = row.querySelector("span").innerText;
+                    textOutput += ` [${cb && cb.checked ? 'X' : ' '}] ${txt}\n`;
                 });
                 textOutput += "\n";
             });
             navigator.clipboard.writeText(textOutput).then(() => alert("📋 打包項目已完整複製到您的剪貼簿！"));
         };
 
+        // 登入流監聽與下拉選單初始化
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                currentUid = user.uid;
+                document.getElementById('login-overlay').classList.add('hidden');
+                await checkAndSeedItinerary();
+
+                // 🌐 全員資料載入與結構化修正
+                onSnapshot(collection(db, "memberProfiles"), (snap) => {
+                    allProfilesCached = [];
+                    snap.forEach(d => {
+                        const userData = d.data();
+                        // 🛠️ 核心修正：將主鍵 ID 與資料包裝在一起，確保 uid 能夠被成功對比
+                        allProfilesCached.push({
+                            uid: d.id,
+                            name: userData.name || "未命名成員",
+                            avatar: userData.avatar || ""
+                        });
+                    });
+                    
+                    const me = allProfilesCached.find(p => p.uid === currentUid);
+                    if(me) {
+                        document.getElementById('current-user-name').innerText = me.name;
+                        document.getElementById('current-user-avatar').src = me.avatar;
+                    }
+
+                    const payerSelect = document.getElementById('expense-payer');
+                    const splitContainer = document.getElementById('expense-split-checkboxes');
+                    const settleFrom = document.getElementById('settle-from');
+                    const settleTo = document.getElementById('settle-to');
+
+                    if(payerSelect && splitContainer) {
+                        payerSelect.innerHTML = ""; splitContainer.innerHTML = "";
+                        settleFrom.innerHTML = ""; settleTo.innerHTML = "";
+
+                        allProfilesCached.forEach(p => {
+                            payerSelect.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
+                            settleFrom.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
+                            settleTo.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
+                            splitContainer.innerHTML += `
+                                <label class="flex items-center space-x-1 bg-white border border-slate-200 pl-1.5 pr-2 py-1 rounded-lg text-[11px] font-semibold text-slate-600 cursor-pointer">
+                                    <input type="checkbox" value="${p.uid}" class="split-cb rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-3.5 h-3.5" checked>
+                                    <span>${p.name}</span>
+                                </label>
+                            `;
+                        });
+                        if(currentUid) {
+                            payerSelect.value = currentUid;
+                            settleFrom.value = currentUid;
+                        }
+                    }
+                    loadExpenses();
+                });
+
+                initChecklistSync();
+                switchDay(1);
+                renderGuides();
+            } else {
+                currentUid = null;
+                document.getElementById('login-overlay').classList.remove('hidden');
+            }
+        });
 
         // ------------------ 系統狀態初始化監聽 ------------------
         onAuthStateChanged(auth, (user) => {
