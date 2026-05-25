@@ -130,6 +130,8 @@
                     <img id="current-user-avatar" src="" class="w-full h-full object-cover hidden">
                     <span id="current-user-text-avatar" class="hidden"></span>
                 </div>
+                <span id="current-user-name" class="text-xs font-bold text-slate-600">載入中...</span>
+                <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 ml-0.5"></i>
             </div>
             <div id="user-dropdown" class="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 hidden z-50">
                 <button onclick="handleSignOut()" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2">
@@ -469,9 +471,9 @@
     </nav>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD7ISA5yXaNuXljUmxfjWSnV1F30jSkqmY",
@@ -581,6 +583,7 @@
             { id:"g18", tag:  "神戶 // 異國風情",  title: "神戶北野異人館街",  desc: "明治開港時期外國領事與商人的精緻洋房聚落，依山而建，街道充滿歐洲小鎮風情。\n● 玩法：漫步斜坡古街，參觀指標性的「風見雞館」與「萌黃之館」，並朝聖全日本最美的星巴克北野異人館店。\n● 建議花費：街區散步免費；部分異人館內部參觀門票 ¥300 - ¥500 不等。",  map: "https://maps.app.goo.gl/RcSnbybGCnU5dBoX8",  tip: "💡 穿著：整區都是連續陡坡，請務必著舒適好走的運動鞋。" }, 
             { id:"g19", tag:  "神戶 // 百萬夜景",  title: "摩耶山掬星台",  desc: "日本三大夜景之一！意指這裡的夜景璀璨閃耀，猶如「用手即可舀起漫天繁星」般夢幻。\n● 玩法：搭乘摩耶登山纜車與高空纜車 (Maya Viewline) 攻頂，眺望整個大阪灣無敵星河夜景。\n● 建議花費：纜車來回票約 ¥1560。",  map: "https://maps.app.goo.gl/nmLRWLwBM323aScM7",  tip: "💡 重大警告：山上體感溫度比平地低 5-10 度，即使是 6 月夜晚也**非常寒冷、風極大**，務必攜帶防風外套！並注意下山末班纜車時間。" }, 
         ];
+
 
         let customPlansList = [];
 
@@ -1382,69 +1385,6 @@
             });
             navigator.clipboard.writeText(textOutput).then(() => alert("📋 打包項目已完整複製到您的剪貼簿！"));
         };
-
-        // 登入流監聽與下拉選單初始化
-        onAuthStateChanged(auth, async (user) => {
-            if(user) {
-                currentUid = user.uid;
-                document.getElementById('login-overlay').classList.add('hidden');
-                await checkAndSeedItinerary();
-
-                // 🌐 全員資料載入與結構化修正
-                onSnapshot(collection(db, "memberProfiles"), (snap) => {
-                    allProfilesCached = [];
-                    snap.forEach(d => {
-                        const userData = d.data();
-                        // 🛠️ 核心修正：將主鍵 ID 與資料包裝在一起，確保 uid 能夠被成功對比
-                        allProfilesCached.push({
-                            uid: d.id,
-                            name: userData.name || "未命名成員",
-                            avatar: userData.avatar || ""
-                        });
-                    });
-                    
-                    const me = allProfilesCached.find(p => p.uid === currentUid);
-                    if(me) {
-                        document.getElementById('current-user-name').innerText = me.name;
-                        document.getElementById('current-user-avatar').src = me.avatar;
-                    }
-
-                    const payerSelect = document.getElementById('expense-payer');
-                    const splitContainer = document.getElementById('expense-split-checkboxes');
-                    const settleFrom = document.getElementById('settle-from');
-                    const settleTo = document.getElementById('settle-to');
-
-                    if(payerSelect && splitContainer) {
-                        payerSelect.innerHTML = ""; splitContainer.innerHTML = "";
-                        settleFrom.innerHTML = ""; settleTo.innerHTML = "";
-
-                        allProfilesCached.forEach(p => {
-                            payerSelect.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
-                            settleFrom.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
-                            settleTo.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
-                            splitContainer.innerHTML += `
-                                <label class="flex items-center space-x-1 bg-white border border-slate-200 pl-1.5 pr-2 py-1 rounded-lg text-[11px] font-semibold text-slate-600 cursor-pointer">
-                                    <input type="checkbox" value="${p.uid}" class="split-cb rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 w-3.5 h-3.5" checked>
-                                    <span>${p.name}</span>
-                                </label>
-                            `;
-                        });
-                        if(currentUid) {
-                            payerSelect.value = currentUid;
-                            settleFrom.value = currentUid;
-                        }
-                    }
-                    loadExpenses();
-                });
-
-                initChecklistSync();
-                switchDay(1);
-                renderGuides();
-            } else {
-                currentUid = null;
-                document.getElementById('login-overlay').classList.remove('hidden');
-            }
-        });
 
         // ------------------ 系統狀態初始化監聽 ------------------
         onAuthStateChanged(auth, (user) => {
