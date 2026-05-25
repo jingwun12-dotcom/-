@@ -42,8 +42,12 @@
             <div id="form-signin" class="space-y-3">
                 <input type="email" id="signin-email" placeholder="電子郵件 (Email)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
                 <input type="password" id="signin-password" placeholder="密碼 (Password)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
+                <div class="text-right">
+                    <button onclick="toggleAuthMode('forgot')" class="text-[11px] text-emerald-600 hover:underline font-semibold">忘記密碼？</button>
+                </div>
                 <button onclick="handleSignIn()" class="w-full bg-emerald-400 text-white text-xs py-2.5 rounded-xl font-bold shadow-md hover:bg-emerald-500 transition">驗證並登入</button>
             </div>
+
 
             <div id="form-signup" class="hidden space-y-3">
                 <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
