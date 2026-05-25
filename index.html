@@ -1414,23 +1414,20 @@ window.updatePersonalWalletSummary = function () {
     let totalJPY = 0;
     let totalTWD = 0;
 
-    if (Array.isArray(globalPersonalExpenses)) {
-        globalPersonalExpenses.forEach(item => {
-            const amount = Number(item.amount || 0);
+    globalPersonalExpenses.forEach(item => {
 
-            if (item.currency === 'JPY') {
-                totalJPY += amount;
-            } else {
-                totalTWD += amount;
-            }
-        });
-    }
+        const twd = Number(item.amount || 0);
+        const jpy = Number(item.convertedJPY || 0);
 
-    const jpyEl = document.getElementById('personal-total-jpy');
-    const twdEl = document.getElementById('personal-total-twd');
+        totalTWD += twd;
+        totalJPY += jpy;
+    });
 
-    if (jpyEl) jpyEl.textContent = `¥ ${totalJPY.toLocaleString()}`;
-    if (twdEl) twdEl.textContent = `NT$ ${totalTWD.toLocaleString()}`;
+    document.getElementById('personal-total-jpy').textContent =
+        `¥ ${totalJPY.toLocaleString()}`;
+
+    document.getElementById('personal-total-twd').textContent =
+        `NT$ ${totalTWD.toLocaleString()}`;
 };
     </script>
 </body>
