@@ -90,7 +90,10 @@
                     </select>
                 </div>
             </div>
-            <input type="text" id="edit-plan-desc" placeholder="詳細說明、備忘錄" class="w-full bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl text-xs focus:outline-none">
+            <div>
+                <label class="text-[10px] text-slate-400 font-bold block mb-1">詳細說明、備忘錄</label>
+                <textarea id="edit-plan-desc" rows="3" placeholder="詳細說明、備忘錄" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs focus:outline-none"></textarea>
+            </div>
             <input type="text" id="edit-plan-map" placeholder="Google Maps 地圖網址" class="w-full bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl text-xs focus:outline-none">
             <div class="flex items-center space-x-2 py-0.5">
                 <input type="checkbox" id="edit-plan-important" class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400">
@@ -972,6 +975,35 @@
             document.getElementById('btn-action-settle').classList.toggle('hidden', mode === 'personal');
             loadExpenses();
         };
+
+
+            // 如果目前是個人私帳模式，動態執行私帳金額加總功能
+            if(walletMode === 'personal') {
+                let totalPersonalJpy = 0;
+                targetArray.forEach(e => {
+                    totalPersonalJpy += e.amount || 0;
+                });
+                document.getElementById('personal-total-jpy').innerText = `¥ ${totalPersonalJpy.toLocaleString()}`;
+                document.getElementById('personal-total-twd').innerText = `NT$ ${Math.round(totalPersonalJpy * rate).toLocaleString()}`;
+            }
+
+            if(targetArray.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-400 text-center py-6">目前還沒有任何消費紀錄明細。</p>`;
+                calculateSettlement();
+                return;
+            }
+
+            targetArray.forEach(e => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100/60";
+                
+                let displayAmountText = "";
+                if(e.currency === 'TWD') {
+                    displayAmountText = `NT$ ${e.originalAmount.toLocaleString()} (¥${e.amount.toLocaleString()})`;
+                } else {
+                    displayAmountText = `¥ ${e.originalAmount.toLocaleString()} (NT$${Math.round(e.amount * rate).toLocaleString()})`;
+                }
+
 
         // 🔥 核心重構：讓 Firebase 即時監聽與資料流在前端完全分水嶺分流
         onSnapshot(query(collection(db, "expenses"), orderBy("createdAt", "desc")), (snap) => {
