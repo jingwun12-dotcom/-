@@ -87,6 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1000);
 });
+document.addEventListener('DOMContentLoaded', () => {
+    initWalletUI();
+});
 
 </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -414,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             
-<div id="personal-wallet-summary" class="hidden bg-gradient-to-br from-emerald-500 to-blue-500 text-white p-4 rounded-2xl shadow-sm space-y-2">
+<div id="personal-wallet-summary" class="bg-gradient-to-br from-emerald-500 to-blue-500 text-white p-4 rounded-2xl shadow-sm space-y-2">
     <div class="flex justify-between items-center">
         <h3 class="font-bold text-sm">👤 個人記帳總覽</h3>
         <span class="text-[10px] bg-white/20 px-2 py-1 rounded-full">即時統計</span>
@@ -917,6 +920,18 @@ window.handleForgotPassword = async function () {
             document.getElementById('plan-important').checked = false;
         };
 
+window.initWalletUI = function () {
+    const summary = document.getElementById('personal-wallet-summary');
+
+    if (!summary) return;
+
+    if (walletMode === 'personal') {
+        summary.style.display = 'block';
+    } else {
+        summary.style.display = 'none';
+    }
+};
+
 	// 核心修正功能 1：銷戶時一併刪除分帳資格與快取資料
         function handleDeleteAccount() {
             if (!confirm("⚠️ 警告：確定要刪除您的成員身分 (銷戶) 嗎？\n此動作將會從資料庫中完全抹除您的帳號，且無法還原！")) return;
@@ -1039,6 +1054,7 @@ window.handleForgotPassword = async function () {
 
         window.toggleWalletMode = (mode) => {
             walletMode = mode;
+initWalletUI();
     if (typeof togglePersonalSummaryVisibility === 'function') togglePersonalSummaryVisibility();
             document.getElementById('wallet-tab-group').className = mode === 'group' ? "w-1/2 py-2 rounded-xl text-center bg-gradient-to-r from-emerald-400 to-blue-400 text-white shadow-xs" : "w-1/2 py-2 rounded-xl text-center text-slate-400";
             document.getElementById('wallet-tab-personal').className = mode === 'personal' ? "w-1/2 py-2 rounded-xl text-center bg-gradient-to-r from-emerald-400 to-blue-400 text-white shadow-xs" : "w-1/2 py-2 rounded-xl text-center text-slate-400";
