@@ -977,32 +977,6 @@
         };
 
 
-            // 如果目前是個人私帳模式，動態執行私帳金額加總功能
-            if(walletMode === 'personal') {
-                let totalPersonalJpy = 0;
-                targetArray.forEach(e => {
-                    totalPersonalJpy += e.amount || 0;
-                });
-                document.getElementById('personal-total-jpy').innerText = `¥ ${totalPersonalJpy.toLocaleString()}`;
-                document.getElementById('personal-total-twd').innerText = `NT$ ${Math.round(totalPersonalJpy * rate).toLocaleString()}`;
-            }
-
-            if(targetArray.length === 0) {
-                container.innerHTML = `<p class="text-[11px] text-slate-400 text-center py-6">目前還沒有任何消費紀錄明細。</p>`;
-                calculateSettlement();
-                return;
-            }
-
-            targetArray.forEach(e => {
-                const row = document.createElement('div');
-                row.className = "flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100/60";
-                
-                let displayAmountText = "";
-                if(e.currency === 'TWD') {
-                    displayAmountText = `NT$ ${e.originalAmount.toLocaleString()} (¥${e.amount.toLocaleString()})`;
-                } else {
-                    displayAmountText = `¥ ${e.originalAmount.toLocaleString()} (NT$${Math.round(e.amount * rate).toLocaleString()})`;
-                }
 
 
         // 🔥 核心重構：讓 Firebase 即時監聽與資料流在前端完全分水嶺分流
