@@ -1067,7 +1067,7 @@ initWalletUI();
         };
 
         // 🔥 核心重構：讓 Firebase 即時監聽與資料流在前端完全分水嶺分流
- onSnapshot(collection(db, "expenses"), (snapshot) => {
+onSnapshot(collection(db, "expenses"), (snapshot) => {
 
     globalGroupExpenses = [];
     globalPersonalExpenses = [];
@@ -1083,9 +1083,9 @@ initWalletUI();
     });
 
     updatePersonalWalletSummary();
+    loadExpenses();
+
 });
-            loadExpenses();
-        });
 
         window.addExpense = async () => {
             const item = document.getElementById('expense-item').value.trim();
