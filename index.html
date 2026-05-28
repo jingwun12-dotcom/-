@@ -43,6 +43,9 @@
                 <input type="email" id="signin-email" placeholder="電子郵件 (Email)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
                 <input type="password" id="signin-password" placeholder="密碼 (Password)" class="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-medium">
                 <button onclick="handleSignIn()" class="w-full bg-emerald-400 text-white text-xs py-2.5 rounded-xl font-bold shadow-md hover:bg-emerald-500 transition">驗證並登入</button>
+                <div class="text-right mt-1">
+                    <button type="button" id="forgot-password-btn" onclick="window.handleForgotPassword && window.handleForgotPassword()" class="text-[11px] text-blue-500 font-bold hover:underline">忘記密碼？</button>
+                </div>
             </div>
 
             <div id="form-signup" class="hidden space-y-3">
@@ -324,6 +327,23 @@
                 <div id="split-settlement-plan" class="bg-slate-900/30 p-2.5 rounded-xl text-[11px] text-emerald-200 space-y-1 leading-relaxed border border-slate-600/30"></div>
             </div>
 
+            <div id="personal-wallet-summary" class="hidden bg-gradient-to-br from-emerald-500 to-blue-500 text-white p-4 rounded-2xl shadow-sm space-y-2">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-sm">👤 個人記帳總覽</h3>
+                    <span class="text-[10px] bg-white/20 px-2 py-1 rounded-full">僅顯示你的私帳</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-white/10 rounded-xl p-3">
+                        <div class="text-[10px] opacity-80">日幣總支出（含台幣換算）</div>
+                        <div id="personal-total-jpy" class="text-lg font-bold">¥ 0</div>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-3">
+                        <div class="text-[10px] opacity-80">台幣總支出（含日幣換算）</div>
+                        <div id="personal-total-twd" class="text-lg font-bold">NT$ 0</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
                     <h3 id="expense-list-title" class="font-bold text-sm text-slate-700">👥 團體公帳歷史明細</h3>
@@ -432,7 +452,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD7ISA5yXaNuXljUmxfjWSnV1F30jSkqmY",
@@ -613,6 +633,19 @@
             const p = document.getElementById('signin-password').value;
             if(!e || !p) return alert("請輸入完整登入資訊！");
             try { await signInWithEmailAndPassword(auth, e, p); } catch(err) { alert("登入失敗: " + err.message); }
+        };
+
+        window.handleForgotPassword = async () => {
+            const email = prompt("請輸入你註冊時使用的 Email，系統會寄送密碼重設連結：");
+            if(!email) return;
+            const cleanEmail = email.trim();
+            if(!cleanEmail) return alert("請輸入有效的 Email");
+            try {
+                await sendPasswordResetEmail(auth, cleanEmail);
+                alert("密碼重設信已寄出，請前往信箱查看重設連結。");
+            } catch(err) {
+                alert("密碼重設信寄送失敗: " + err.message);
+            }
         };
 
         window.handleSignUp = async () => {
@@ -912,8 +945,11 @@
             document.getElementById('expense-list-title').innerText = mode === 'group' ? "👥 團體公帳歷史明細" : "👤 個人私帳歷史明細";
             document.getElementById('group-member-selectors').classList.toggle('hidden', mode === 'personal');
             document.getElementById('panel-group-settlement').classList.toggle('hidden', mode === 'personal');
+            document.getElementById('personal-wallet-summary').classList.toggle('hidden', mode !== 'personal');
             document.getElementById('btn-action-settle').classList.toggle('hidden', mode === 'personal');
+            if(mode === 'personal' && walletAction === 'settle') switchWalletAction('expense');
             loadExpenses();
+            updatePersonalWalletSummary();
         };
 
         // 🔥 核心重構：讓 Firebase 即時監聽與資料流在前端完全分水嶺分流
@@ -981,6 +1017,39 @@
 
         window.deleteExpense = async (id) => { if(confirm("確定刪除此筆記記帳明細？")) await deleteDoc(doc(db, "expenses", id)); };
 
+        function updatePersonalWalletSummary() {
+            const rate = parseFloat(document.getElementById('fx-rate').value) || 0.212;
+            let totalJPY = 0;
+            let totalTWD = 0;
+
+            globalPersonalExpenses
+                .filter(e => e.uid === currentUid)
+                .forEach(e => {
+                    const currency = e.currency || 'JPY';
+                    const originalAmount = Number(e.originalAmount ?? e.amount ?? 0);
+                    const amountJpy = Number(e.amount ?? 0);
+
+                    // 私人記帳總覽採「雙幣等值總額」：
+                    // - 若原始幣別是 JPY：日幣總額加原始日幣，台幣總額加匯率換算後台幣
+                    // - 若原始幣別是 TWD：台幣總額加原始台幣，日幣總額加匯率反推後日幣
+                    // 只讀取 currentUid 的個人私帳，不影響群組公帳與 Firebase 既有資料結構。
+                    if(currency === 'TWD') {
+                        const twd = originalAmount || Math.round(amountJpy * rate);
+                        totalTWD += twd;
+                        totalJPY += rate > 0 ? Math.round(twd / rate) : 0;
+                    } else {
+                        const jpy = amountJpy || originalAmount;
+                        totalJPY += jpy;
+                        totalTWD += Math.round(jpy * rate);
+                    }
+                });
+
+            const jpyEl = document.getElementById('personal-total-jpy');
+            const twdEl = document.getElementById('personal-total-twd');
+            if(jpyEl) jpyEl.innerText = `¥ ${Math.round(totalJPY).toLocaleString()}`;
+            if(twdEl) twdEl.innerText = `NT$ ${Math.round(totalTWD).toLocaleString()}`;
+        }
+
         function loadExpenses() {
             const container = document.getElementById('expense-list');
             container.innerHTML = "";
@@ -1023,6 +1092,7 @@
             });
 
             // ⚠️ 修正：無論當前處於什麼分頁，公帳的清算天平一律使用全量獨立的 globalGroupExpenses 陣列
+            updatePersonalWalletSummary();
             calculateSettlement();
         }
 
@@ -1270,6 +1340,23 @@
                 document.getElementById('login-overlay').classList.remove('hidden');
             }
         });
-    </script>
+    
+
+        // 忘記密碼：保險綁定，避免瀏覽器或舊快取造成 inline onclick 沒有觸發
+        document.addEventListener('DOMContentLoaded', () => {
+            const forgotBtn = document.getElementById('forgot-password-btn');
+            if (forgotBtn) {
+                forgotBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (typeof window.handleForgotPassword === 'function') {
+                        window.handleForgotPassword();
+                    } else {
+                        alert('忘記密碼功能尚未完成載入，請重新整理頁面後再試一次。');
+                    }
+                });
+            }
+        });
+</script>
 </body>
 </html>
