@@ -481,6 +481,21 @@
         let allProfilesCached = [];
         let globalGroupExpenses = [];  // 🔥 新增：獨立分流保存公帳，不受個人私帳切換干擾
         let globalPersonalExpenses = []; // 🔥 新增：獨立分流保存私帳
+        let isSigningIn = false; // 防止登入連點造成 Firebase 短時間過多請求
+
+        function getNumberValue(value, fallback = 0) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : fallback;
+        }
+
+        function getAuthErrorMessage(err, fallback = '操作失敗') {
+            const code = err && err.code ? err.code : '';
+            if (code === 'auth/too-many-requests') return '短時間嘗試次數過多，Firebase 已暫時限制此登入/重設請求。請先停止重複嘗試，稍後再試。';
+            if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return '登入失敗，Email 或密碼不正確。';
+            if (code === 'auth/invalid-email') return 'Email 格式錯誤。';
+            if (code === 'auth/network-request-failed') return '網路連線失敗，請確認網路後再試。';
+            return `${fallback}: ${err && err.message ? err.message : code}`;
+        }
 
         const seedItinerary = {
             1: [
@@ -602,31 +617,16 @@
             }
         };
 window.handleForgotPassword = async function () {
-    const email = prompt('請輸入你註冊的 Email：');
-
-    if (!email) {
-        alert('請輸入 Email');
-        return;
-    }
-
-    try {
-        await sendPasswordResetEmail(auth, email);
-
-        alert('密碼重設信已寄出，請至信箱查看。');
-    } catch (err) {
-        console.error(err);
-
-        let msg = '寄送失敗';
-
-        if (err.code === 'auth/user-not-found') {
-            msg = '查無此 Email';
-        } else if (err.code === 'auth/invalid-email') {
-            msg = 'Email 格式錯誤';
-        }
-
-        alert(msg);
-    }
-};
+            const email = prompt('請輸入你註冊的 Email，系統將寄送密碼重設連結：');
+            if (!email) return alert('你尚未輸入 Email');
+            try {
+                await sendPasswordResetEmail(auth, email.trim());
+                alert('密碼重設信已寄出，請至信箱查看。');
+            } catch (err) {
+                console.error('Password reset failed:', err);
+                alert(getAuthErrorMessage(err, '寄送失敗'));
+            }
+        };
         window.toggleAuthMode = (mode) => {
             document.getElementById('form-signin').classList.toggle('hidden', mode !== 'signin');
             document.getElementById('form-signup').classList.toggle('hidden', mode !== 'signup');
@@ -658,10 +658,33 @@ window.handleForgotPassword = async function () {
         };
 
         window.handleSignIn = async () => {
+            if (isSigningIn) return;
             const e = document.getElementById('signin-email').value.trim();
             const p = document.getElementById('signin-password').value;
             if(!e || !p) return alert("請輸入完整登入資訊！");
-            try { await signInWithEmailAndPassword(auth, e, p); } catch(err) { alert("登入失敗: " + err.message); }
+
+            const btn = document.querySelector('button[onclick="handleSignIn()"]');
+            const oldText = btn ? btn.innerText : '';
+            isSigningIn = true;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '登入中，請稍候...';
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, e, p);
+            } catch(err) {
+                console.error('Sign in failed:', err);
+                alert(getAuthErrorMessage(err, '登入失敗'));
+            } finally {
+                isSigningIn = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = oldText || '驗證並登入';
+                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+            }
         };
 
         window.handleSignUp = async () => {
@@ -986,13 +1009,12 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
     globalPersonalExpenses = [];
 
     snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const expenseRecord = { id: docSnap.id, ...data };
+        const data = { id: docSnap.id, ...docSnap.data() };
 
         if (data.mode === "personal") {
-            globalPersonalExpenses.push(expenseRecord);
+            globalPersonalExpenses.push(data);
         } else {
-            globalGroupExpenses.push(expenseRecord);
+            globalGroupExpenses.push(data);
         }
     });
 
@@ -1059,11 +1081,7 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
             filtered.forEach(e => {
                 const row = document.createElement('div');
                 row.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl text-xs border border-slate-100/60";
-                const originalAmount = Number(e.originalAmount ?? e.amount ?? 0);
-                const amountJpy = Number(e.amount ?? originalAmount ?? 0);
-                let displayAmountText = (e.currency === 'TWD')
-                    ? `NT$ ${Math.round(originalAmount).toLocaleString()} (➔ ¥${Math.round(amountJpy).toLocaleString()})`
-                    : `¥ ${Math.round(originalAmount).toLocaleString()} (≈ NT$ ${Math.round(amountJpy * rate).toLocaleString()})`;
+                let displayAmountText = (e.currency === 'TWD') ? `NT$ ${e.originalAmount} (➔ ¥${e.amount})` : `¥ ${e.amount} (≈ NT$ ${Math.round(e.amount * rate)})`;
 
                 if(e.type === 'settlement') {
                     const fromName = allProfilesCached.find(p=>p.uid===e.payer)?.name || "成員";
@@ -1300,7 +1318,13 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
                         });
                     });
                     
-                    const me = allProfilesCached.find(p => p.uid === currentUid);
+                    let me = allProfilesCached.find(p => p.uid === currentUid);
+                    if(!me && auth.currentUser) {
+                        const fallbackName = auth.currentUser.email ? auth.currentUser.email.split('@')[0] : '旅行成員';
+                        me = { uid: currentUid, name: fallbackName, avatar: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310B981'/><text x='50%' y='60%' text-anchor='middle' fill='white' font-size='28' font-weight='bold'>ME</text></svg>" };
+                        allProfilesCached.push(me);
+                        setDoc(doc(db, "memberProfiles", currentUid), me, { merge: true }).catch(err => console.warn('memberProfiles fallback write failed:', err));
+                    }
                     if(me) {
                         document.getElementById('current-user-name').innerText = me.name;
                         document.getElementById('current-user-avatar').src = me.avatar;
@@ -1351,21 +1375,28 @@ window.updatePersonalWalletSummary = function () {
         .filter(item => !currentUid || item.uid === currentUid)
         .forEach(item => {
             const currency = item.currency || 'JPY';
-            const originalAmount = Number(item.originalAmount ?? item.amount ?? 0);
+            const originalAmount = getNumberValue(item.originalAmount, getNumberValue(item.amount, 0));
+            const amountJpy = getNumberValue(item.amount, 0);
 
             if (currency === 'TWD') {
-                totalTWD += originalAmount;
+                totalTWD += Math.round(originalAmount);
             } else {
-                totalJPY += originalAmount;
+                totalJPY += Math.round(originalAmount || amountJpy);
             }
         });
 
     const jpyEl = document.getElementById('personal-total-jpy');
     const twdEl = document.getElementById('personal-total-twd');
-
-    if (jpyEl) jpyEl.textContent = `¥ ${Math.round(totalJPY).toLocaleString()}`;
-    if (twdEl) twdEl.textContent = `NT$ ${Math.round(totalTWD).toLocaleString()}`;
+    if (jpyEl) jpyEl.textContent = `¥ ${totalJPY.toLocaleString()}`;
+    if (twdEl) twdEl.textContent = `NT$ ${totalTWD.toLocaleString()}`;
 };
+
+window.togglePersonalSummaryVisibility = function () {
+    const summary = document.getElementById('personal-wallet-summary');
+    if (!summary) return;
+    summary.classList.toggle('hidden', walletMode !== 'personal');
+};
+
     </script>
 </body>
 </html>
