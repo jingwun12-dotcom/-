@@ -4,78 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>旅行指南 - 京阪神奈關西遊</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4">
-function formatMultilineText(text) {
-    if (!text) return '';
-    return text
-        .replace(/\n/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>');
-}
-
-
-window.handleForgotPassword = async function () {
-    const email = prompt('請輸入你註冊的 Email，系統將寄送密碼重設連結：');
-
-    if (!email) {
-        alert('你尚未輸入 Email');
-        return;
-    }
-
-    try {
-        await sendPasswordResetEmail(auth, email);
-
-        alert(
-            '密碼重設信已寄出\n\n請前往你的 Email 信箱查看重設連結。'
-        );
-    } catch (err) {
-        console.error(err);
-
-        let msg = '寄送失敗';
-
-        if (err.code === 'auth/user-not-found') {
-            msg = '查無此 Email 帳號';
-        } else if (err.code === 'auth/invalid-email') {
-            msg = 'Email 格式錯誤';
-        }
-
-        alert(msg);
-    }
-};
-
-
-
-window.togglePersonalSummaryVisibility = function () {
-    const summary = document.getElementById('personal-wallet-summary');
-
-    if (!summary) return;
-
-    if (walletMode === 'personal') {
-        summary.classList.remove('hidden');
-    } else {
-        summary.classList.add('hidden');
-    }
-};
-
-    const jpyEl = document.getElementById('personal-total-jpy');
-    const twdEl = document.getElementById('personal-total-twd');
-
-    if (jpyEl) jpyEl.textContent = `¥ ${totalJPY.toLocaleString()}`;
-    if (twdEl) twdEl.textContent = `NT$ ${totalTWD.toLocaleString()}`;
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    setInterval(() => {
-        if (typeof updatePersonalWalletSummary === 'function') {
-            updatePersonalWalletSummary();
-            togglePersonalSummaryVisibility();
-        }
-    }, 1000);
-});
-document.addEventListener('DOMContentLoaded', () => {
-    initWalletUI();
-});
-
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -926,7 +855,7 @@ window.initWalletUI = function () {
             const targetUid = currentUid;
             
             // 【主動修正：同步將成員從前端分帳快取及下拉選單中完全刪除】
-            allProfilesCached = allProfilesCached.filter(p => p.uid !== targetUid);
+            profilesCached = profilesCached.filter(p => p.uid !== targetUid);
             updateMemberSelectors(); // 重新渲染付款人、清償人下拉選單及分帳核取方塊
             
             alert("帳號已成功銷戶，分帳資格已同步撤銷！");
@@ -951,7 +880,7 @@ window.initWalletUI = function () {
             settleTo.innerHTML = '';
             splitContainer.innerHTML = '';
             
-            allProfilesCached.forEach(p => {
+            profilesCached.forEach(p => {
                 payerSelect.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
                 settleFrom.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
                 settleTo.innerHTML += `<option value="${p.uid}">${p.name}</option>`;
@@ -1057,12 +986,13 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
     globalPersonalExpenses = [];
 
     snapshot.forEach(docSnap => {
-        const data = { id: docSnap.id, ...docSnap.data() };
+        const data = docSnap.data();
+        const expenseRecord = { id: docSnap.id, ...data };
 
         if (data.mode === "personal") {
-            globalPersonalExpenses.push(data);
+            globalPersonalExpenses.push(expenseRecord);
         } else {
-            globalGroupExpenses.push(data);
+            globalGroupExpenses.push(expenseRecord);
         }
     });
 
@@ -1129,7 +1059,11 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
             filtered.forEach(e => {
                 const row = document.createElement('div');
                 row.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl text-xs border border-slate-100/60";
-                let displayAmountText = (e.currency === 'TWD') ? `NT$ ${e.originalAmount} (➔ ¥${e.amount})` : `¥ ${e.amount} (≈ NT$ ${Math.round(e.amount * rate)})`;
+                const originalAmount = Number(e.originalAmount ?? e.amount ?? 0);
+                const amountJpy = Number(e.amount ?? originalAmount ?? 0);
+                let displayAmountText = (e.currency === 'TWD')
+                    ? `NT$ ${Math.round(originalAmount).toLocaleString()} (➔ ¥${Math.round(amountJpy).toLocaleString()})`
+                    : `¥ ${Math.round(originalAmount).toLocaleString()} (≈ NT$ ${Math.round(amountJpy * rate).toLocaleString()})`;
 
                 if(e.type === 'settlement') {
                     const fromName = allProfilesCached.find(p=>p.uid===e.payer)?.name || "成員";
@@ -1410,31 +1344,19 @@ onSnapshot(collection(db, "expenses"), (snapshot) => {
         });
 
 window.updatePersonalWalletSummary = function () {
-
     let totalJPY = 0;
     let totalTWD = 0;
 
-    const normalizeCurrency = (currency) => String(currency || 'JPY').toUpperCase();
-    const toNumber = (value, fallback = 0) => {
-        const n = Number(value);
-        return Number.isFinite(n) ? n : fallback;
-    };
-
     globalPersonalExpenses
-        .filter(item => item && item.uid === currentUid)
+        .filter(item => !currentUid || item.uid === currentUid)
         .forEach(item => {
-            const currency = normalizeCurrency(item.currency);
-            const originalAmount = toNumber(item.originalAmount, toNumber(item.amount, 0));
-            const normalizedJpyAmount = toNumber(item.amount, originalAmount);
+            const currency = item.currency || 'JPY';
+            const originalAmount = Number(item.originalAmount ?? item.amount ?? 0);
 
-            // 既有資料結構：
-            // - JPY 輸入：originalAmount = 原始日幣、amount = 日幣
-            // - TWD 輸入：originalAmount = 原始台幣、amount = 換算後日幣
-            // 因此個人總覽需依「原始幣別」分桶加總，避免日幣誤進台幣欄位。
             if (currency === 'TWD') {
                 totalTWD += originalAmount;
             } else {
-                totalJPY += originalAmount || normalizedJpyAmount;
+                totalJPY += originalAmount;
             }
         });
 
